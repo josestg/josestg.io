@@ -44,6 +44,9 @@ const siteMetadata = {
       searchDocumentsPath: 'search.json',
     },
   },
+  newsletter: {
+    provider: 'mailchimp',
+  },
 }
 
 module.exports = siteMetadata
