@@ -1,0 +1,330 @@
+---
+title: 'ASD #00: Implementasi Array dari Nol dengan C++'
+date: '2023-08-22'
+tags: ['algorithm', data-structure', 'c++']
+draft: false
+summary: Module pertama dari series implemtasi Algoritma dan Struktur Data dari Nol menggunakan C++.
+images: []
+---
+
+Array adalah struktur data yang menampung kumpulan data dengan **tipe yang sama dalam blok memori kontigu**. Data dalam array dapat diakses melalui indeks $i$. Dengan $0 \leq i \leq N-1$ dan $N$ adalah panjang array.
+
+Kontigu berarti bahwa setiap data yang disimpan dalam suatu array diletakkan di dalam memori dengan alamat yang berurutan, seperti yang diilustrasikan pada gambar berikut.
+
+![contigouos-vs-non-contigouos](/static/images/contigouos.svg)
+
+Kotak berwarna hijau mewakili data yang disimpan dalam array. Pada contoh ini, array menyimpan 6 angka pertama dari deret Fibonacci. Data pertama disimpan di alamat 116, data kedua di alamat 120, dan seterusnya hingga data terakhir disimpan di alamat 136. Berbeda dengan pendekatan yang tidak kontigu, di mana data disimpan dalam tiga blok terpisah.
+
+Selain kontigu, data dalam array juga harus memiliki tipe yang sama. Seperti yang digambarkan dalam ilustrasi, data yang disimpan dalam hal ini adalah bilangan bulat (*integer*). Pada bahasa pemrograman *strong-typed* seperti C++, Go, Rust, dan lainnya, setiap jenis tipe data memiliki ukuran dalam *byte*. Sebagai contoh di C++, `int` memiliki ukuran 32 bit (4 byte). Dengan menjamin keseragaman tipe data, blok memori yang dialokasikan dapat dibagi secara merata. Seperti pada ilustrasi sebelumnya, dalam hal ini diperlukan blok memori berukuran $6 \times 4 = 24$ byte secara berurutan untuk menampung 6 buah *integer*.
+
+Kedua karakteristik tersebut membuat array menjadi sangat efisien dalam menyimpan dan mengakses data. Kita dapat membuat sebuah rumus sederhana untuk menemukan alamat data jika kita mengetahui alamat dari data pertama yang disimpan dalam array. Misalnya, jika alamat data pertama adalah $A_{0}$ dan ukuran tipe data dalam byte adalah $T$, kita dapat menggunakan rumus berikut untuk menemukan posisi data ke-$A_{i}$:
+
+$$
+A_{i} = A_{0} + (i \times T)
+$$
+
+Dengan $0 \leq i \leq N-1$ dan $N$ adalah panjang array. Jika kita menggunakan rumus ini untuk mencari alamat data ke-$4$ atau $A_{3}$ (karena $i$ dimulai dari $0$), hasilnya adalah $A_{i} = 116 + (3 \times 4) \equiv 116 + 12 \equiv 128$. Seperti yang terlihat pada ilustrasi sebelumnya, data ke-$4$ berada di alamat $128$. Jika Anda sudah pernah menggunakan array, dalam konteks ini, $i$ adalah indeks yang umumnya digunakan untuk mengakses data dalam array.
+
+Sehingga, dengan menggunakan rumus tersebut, array menjamin bahwa operasi penyimpanan dan akses data selalu memiliki kompleksitas waktu di $O(1)$. Tentu, kedua karakteristik tersebut memiliki kelemahan, yaitu ukuran dari array tidak boleh berubah setelah array dibuat, karena bisa saja alamat berikutnya sudah dipesan oleh proses lain. Seperti yang ditunjukkan pada ilustrasi sebelumnya, alamat 112 dan 140 sudah dimiliki oleh proses lain. 
+
+
+## Abstract Data Type (ADT) pada Array
+
+Abstract Data Type (ADT) adalah kontrak yang menggambarkan perilaku dari suatu tipe data. Perilaku ini biasanya berupa fungsi-fungsi yang digunakan untuk berinteraksi dengan tipe data tersebut. Dalam bahasa pemrograman berbasis objek (OOP), ADT kurang lebih adalah sebuah Interface.
+
+Dalam implementasinya, array adalah sebuah tipe data bentukan, yang berarti array juga dapat memiliki Abstract Data Type (ADT). Berikut ini adalah beberapa contoh ADT yang sering digunakan pada array.
+
+### Tipe Bentukan `Array`
+
+```cpp
+typedef struct Array {
+  int *_ptr;
+  int _len;
+} Array;
+```
+
+Struct `Array` memiliki dua properti, yaitu `_ptr` dan `_len` (keduanya menggunakan awalan `_` hanya untuk memberikan klarifikasi bahwa ini adalah properti).
+
+`_ptr` adalah sebuah pointer ke tipe data `int` (`int*`). Properti ini akan merujuk ke alamat pertama dari blok memori yang dialokasikan. Ingat pada rumus sebelumnya, kita hanya perlu mengetahui alamat data pertama.
+
+`_len` adalah sebuah bilangan bulat yang menyimpan informasi tentang panjang `Array`. Ini digunakan untuk validasi rentang indeks, untuk mencegah terjadinya Segmentation Fault.
+
+### Fungsi `make`
+
+```cpp
+Array make(int n);
+```
+
+Fungsi `make` digunakan untuk membuat `Array` baru dengan ukuran $n$, sehingga `Array` dapat menampung sebanyak $n$ data. Nilai yang dikembalikan oleh fungsi `make` adalah sebuah `Array` yang awalnya memiliki semua elemen bernilai `0` (nol).
+
+### Fungsi `get`
+
+```cpp
+int get(const Array &arr, int idx);
+```
+
+Fungsi `get` digunakan untuk mengakses data pada index ke-`idx` dalam `Array`. Fungsi `get` mengembalikan data bertipe `int` atau mengembalikan `error` jika `idx` lebih besar dari $N-1$ atau kurang dari $0$.
+
+> **PERHATIAN**:
+>
+> Pada fungsi `get`, `Array &arr` berarti bahwa fungsi tersebut menerima referensi ke `Array`. Penambahan `const` di depannya mengindikasikan bahwa fungsi `get` hanya diizinkan untuk membaca data dari `Array`. Oleh karena itu, jika fungsi `get` mencoba untuk mengubah data dalam `Array`, akan terjadi error pada saat kompilasi.
+>
+> Biasanya ini disebut sebagai **Read-Only Reference** atau **Immutable Reference**.
+
+### Fungsi `set`
+
+```cpp
+void set(Array &arr, int idx, int val);
+```
+
+Fungsi `set` digunakan untuk memasukkan data `val` ke indeks ke-`idx`. Jika `idx` lebih besar dari $N-1$ atau lebih kecil dari $0$, maka fungsi `set` akan mengembalikan `error`.
+
+> **PERHATIAN**:
+>
+> Fungsi `set` menerima `Array &arr` (tanpa `const`), yang berarti fungsi `set` dapat membaca dan juga mengubah data dalam `Array`.
+
+
+### Fungsi `length`
+
+```cpp
+int length(const Array &arr);
+```
+
+Fungsi `length` digunakan untuk mendapatkan panjang `Array`. Nilai yang dikembalikan oleh fungsi ini adalah $n$, yang sebelumnya diberikan pada fungsi `make`. 
+
+### Fungsi `to_string`
+
+```cpp
+std::string to_string(const Array &arr);
+```
+
+Fungsi `to_string` digunakan untuk membuat representasi `Array` dalam bentuk `string`. Jika kita menggunakan contoh dari gambar sebelumnya, maka hasil yang dikembalikan oleh fungsi ini adalah `"[1, 1, 2, 3, 5, 8]"`. Fungsi ini sangat bermanfaat bagi kita selama proses debugging.
+
+
+### Fungsi `copy`
+
+```cpp
+int copy(const Array &src, Array &dst);
+```
+
+Fungsi `copy` digunakan untuk menyalin data dari `Array` sumber (`src`) ke `Array` tujuan (`dst`). Fungsi ini mengembalikan nilai bertipe `int`, yang mewakili jumlah data yang berhasil disalin. Fungsi `copy` harus memenuhi persyaratan berikut:
+
+1. Jika $L_{src} = L_{dst}$, maka semua data di `src` akan sama dengan data di `dst`.
+2. Jika $L_{src} < L_{dst}$, hanya $L_{src}$ data pertama dari `src` yang akan disalin ke `dst`. Data di `dst` mulai dari posisi ke-$L_{src}+1$ hingga $L_{dst}$ tidak akan diubah. Sebagai contoh: `src=[1, 2, 3]` dan `dst=[4, 5, 6, 7, 8]`, setelah operasi `copy(src, dst)`, `src=[1, 2, 3]` dan `dst=[1, 2, 3, 7, 8]`.
+3. Jika $L_{src} > L_{dst}$, hanya $L_{dst}$ data dari `src` yang akan disalin ke `dst`. Sebagai contoh: `src=[1, 2, 3, 4, 5]` dan `dst=[6, 7, 8]`, setelah operasi `copy(src, dst)`, `src=[1, 2, 3, 4, 5]` dan `dst=[1, 2, 3]`.
+4. Setelah operasi `copy`, jika terjadi perubahan data di `src`, data di `dst` tidak seharusnya terpengaruh. Jika perubahan terjadi di `dst`, maka `src` juga tidak boleh berubah.
+
+Dengan $L_{src}$ adalah panjang dari `Array` sumber, dan $L_{dst}$ adalah panjang dari `Array` tujuan. Dengan demikian, dapat disimpulkan bahwa nilai yang dikembalikan oleh fungsi `copy` selalu adalah $min(L_{src}, L_{dst})$.
+
+### Fungsi `clone`
+
+```cpp
+Array clone(const Array &arr);
+```
+
+Fungsi `clone` digunakan untuk membuat sebuah `Array` baru yang memiliki panjang dan data yang sama dengan `Array` sumber. Fungsi `clone` harus mengembalikan `Array` yang sepenuhnya terpisah dari `Array` sumber, sehingga modifikasi pada `Array` sumber tidak akan mempengaruhi `Array` hasil kloning, dan sebaliknya.
+
+### Fungsi `dealloc`
+
+```cpp
+void dealloc(Array &arr);
+```
+
+Fungsi terakhir adalah `dealloc`, yang digunakan untuk melepaskan memori yang dialokasikan oleh fungsi `make`, sehingga memungkinkan proses lain untuk memanfaatkan kembali memori yang sebelumnya telah digunakan. Fungsi ini sangat penting, terutama ketika kita menggunakan alokasi memori manual. Jika kita tidak melakukan dealokasi setelah penggunaan selesai, maka bisa terjadi yang disebut Memory Leaks.
+
+
+## Implementasi Array
+
+Sebagai disclaimer, implementasi ini sengaja tidak menggunakan OOP dan `template` karena target dari artikel ini adalah mahasiswa ilmu komputer yang sedang mengambil mata kuliah Algoritma dan Struktur Data. Prasyarat dari mata kuliah tersebut hanya mencakup pemrograman dasar. Namun, jika Anda sudah berpengalaman dalam OOP dan `template`, Anda bisa mengembangkan implementasi ini dengan menggunakan konsep tersebut sebagai bahan latihan.
+
+### Fungsi `make`
+
+Agar dapat mengimplementasikan fungsi `make`, penting untuk memahami bagaimana memesan memori secara kontigu yang dapat menampung sebanyak $n$-buah `integer` dan menginisialisasi semua data menjadi nilai `zero-value` dari tipe data yang digunakan. Dalam implementasi ini, kita menggunakan tipe data `integer`, di mana nilai `zero-value` adalah `0` (nol).
+
+Berdasarkan [dokumentasi ini](https://en.cppreference.com/w/cpp/memory/c/calloc), fungsi `calloc` sangat tepat untuk kebutuhan kita. Fungsi `calloc` menerima argumen `num`, yang menunjukkan jumlah data yang ingin kita simpan, serta argumen `size`, yang menunjukkan ukuran satu unit data. Dalam kasus kita, `num` adalah $n$, dan `size` adalah `sizeof(int)`, yang setara dengan 4 byte. Fungsi `calloc` mengembalikan alamat pertama dari blok memori yang kita alokasikan dengan tipe `void*`.
+
+Tipe data `void*` menandakan bahwa nilai yang dikembalikan belum memiliki tipe data yang ditentukan. Oleh karena itu, kita perlu melakukan proses *casting* untuk memberi tahu compiler bagaimana cara membaca data yang ada dalam memori. Jika kita melakukan *casting* ke `int*`, kita memberitahu compiler untuk membaca data menggunakan representasi Two's Complement, yaitu ketika Most Significant Bit (MSB) adalah 1, maka data yang disimpan dianggap sebagai bilangan negative. Namun, jika kita melakukan pengecoran ke `uint`, compiler akan membaca data dengan cara yang berbeda, karena 1 bit pertama pada MSB tidak lagi dianggap sebagai *signed-bit*.
+
+Sehingga, implementasi fungsi `make` akan terlihat seperti berikut:
+
+```cpp
+Array make(int n) {
+  // currently the array only supports int type. In the future, we can use
+  // template to support other types.
+  int* ptr = (int*)std::calloc(n, sizeof(int));
+  if (ptr == nullptr) {
+    throw std::bad_alloc();
+  }
+  return Array{._ptr = ptr, ._len = n};
+}
+```
+
+Perlu dilakukan pengecekan untuk memeriksa apakah `ptr == nullptr`, karena berdasarkan dokumentasi `calloc` yang telah disebutkan sebelumnya, ada kemungkinan alokasi gagal yang ditandai dengan mengembalikan `nullptr`.
+
+Dari implementasi ini, dapat disimpulkan bahwa kompleksitas waktu dan ruangnya adalah $O(1)$, bukan $O(N)$, karena pada dasarnya kita mengalokasikan satu blok memori tunggal yang secara logis dibagi menjadi $N$ partisi secara merata.
+
+
+### Fungsi `get`
+
+Seperti yang telah kita diskusikan sebelumnya, untuk membaca data yang terdapat dalam `Array`, kita memerlukan alamat data dalam memori. Kita dapat menggunakan rumus yang telah kita buat sebelumnya, yaitu:
+
+$$
+A_{i} = A_{0} + (i \times T)
+$$
+
+Kita memiliki `A_0`, yaitu alamat pertama dari blok memori, yang kita peroleh dari fungsi `make` dan disimpan di dalam `_ptr`. Selanjutnya, kita mengetahui `T` karena telah dilakukan *casting* ke `int*`, sehingga kompiler mengetahui bahwa nilai `T` adalah ukuran dari tipe data `int`. Dan kita juga memiliki `i`, yaitu nilai `idx`.
+
+Namun, terdapat sedikit perbedaan, karena kompiler sudah mengetahui ukuran dari satu unit tipe data karena  *casting* yang telah dilakukan sebelumnya, maka tidak perlu dilakukan operasi perkalian lagi. Dengan demikian, rumus yang diperbarui menjadi:
+
+$$
+A_{i} = A_{0} + i
+$$
+
+Namun perlu diingat, di balik layar, kompiler pada dasarnya masih menggunakan rumus yang sebelumnya. Konsep ini dikenal sebagai *Pointer Arithmetic*.
+
+Jika kita menerjemahkan ini ke dalam C++, rumus tadi dapat direpresentasikan sebagai `int* addr = arr._ptr + idx`. Dalam ekspresi ini, kita memperoleh alamat. Namun, untuk mengambil nilai data pada alamat tersebut, kita perlu menggunakan operator dereference (`*`), sehingga akhirnya untuk mendapatkan data, kita menggunakan `*addr`.
+
+Oleh karena itu, implementasi fungsi `get` akan terlihat seperti berikut:
+
+```cpp
+int get(const Array& arr, int idx) {
+  if (arr._ptr == nullptr || idx < 0 || idx >= arr._len) {
+    throw std::out_of_range("index out of range");
+  }
+  int* addr = arr._ptr + idx;
+  int  val  = *addr;
+  return val;
+}
+```
+
+Seperti yang ditunjukkan dalam kode di atas, dilakukan pengecekan terhadap rentang nilai `idx` untuk mencegah terjadinya *segmentation fault*.
+
+Dari implementasi ini, dapat disimpulkan bahwa kompleksitas waktu dan ruang fungsi `get` adalah $O(1)$, karena dengan menggunakan *Pointer Arithmetic*, kita mampu menghitung alamat memory tujuan secara langsung.
+
+### Fungsi `set`
+
+Fungsi `set` mengikuti pendekatan yang serupa dengan fungsi `get`, dengan perbedaan pada bagian akhir. Pada fungsi `get`, kita membaca data dari alamat tertentu, sedangkan pada fungsi `set`, kita menuliskan data ke alamat tersebut. Oleh karena itu, perubahan yang diperlukan adalah mengganti baris `int  val  = *addr;` menjadi `*addr = val;`, seperti yang terlihat pada kode berikut.
+
+```cpp
+void set(Array& arr, int idx, int val) {
+  if (arr._ptr == nullptr || idx < 0 || idx >= arr._len) {
+    throw std::out_of_range("index out of range");
+  }
+  int* addr = arr._ptr + idx;
+  *addr = val;
+}
+```
+
+Sama dengan fungsi `get`, fungsi `set` juga kompleksitas waktu dan ruang $O(1)$.
+
+### Fungsi `length`
+
+Fungsi `length` sangat simple karena kita telah menyimpan nilai $n$ saat menggunakan fungsi `make`. Oleh karena itu, kita hanya perlu mengembalikan nilai $n$ yang disimpan dalam `_len`.
+
+```cpp
+int length(const Array& arr) { return arr._len; }
+```
+
+Kompleksitas waktu dan ruang fungsi `length` adalah $O(1)$.
+
+### Fungsi `to_string`
+
+Logika untuk membuat representasi string dari `Array` sangat sederhana. Kita hanya perlu membuat sebuah string penampung, lalu melakukan iterasi dari indeks 0 hingga indeks $N-1$, dan pada setiap iterasi membaca data dari indeks tersebut menggunakan fungsi `get`, kemudian menggabungkannya dengan string penampung. Untuk lebih memahami, perhatikan kode di bawah ini.
+
+```cpp
+std::string to_string(const Array& arr) {
+  std::string str = "["; 
+  for (int i = 0; i < length(arr); ++i) {
+    int val = get(arr, i);                     // get the element at index i.
+    std::string strval = std::to_string(val);  // convert the element to string.
+    str += strval;                             // concatenate previous string
+                                               // with current value.
+
+    // only add separator if the current element is not the last element.
+    if (i < arr._len - 1) {
+      str += ", ";
+    }
+  }
+  str += "]";
+  return str;
+}
+```
+
+Kode di atas sudah benar, namun kurang efisien karena penggabungan string menggunakan operasi `+` akan menghasilkan pembuatan string baru. Ini terjadi karena string bersifat immutable. Di dalam bahasa pemrograman C++, string diimplementasikan dengan menggunakan Dynamic Array. Pada saat string dibuat, nilai `capacity` sama dengan `length`, sehingga setiap operasi `+` atau penggabungan akan membuat string baru.
+
+Karena kita memiliki $N$ data dalam `Array`, dan setiap operasi penggabungan akan memerlukan waktu $O(M^2)$, di mana $M$ adalah panjang string sebelum penggabungan. Oleh karena itu, total kompleksitasnya akan menjadi $O(N \times M^2)$. Karena dalam kasus ini nilai $M$ tidak jauh beda $N$, kita bisa menuliskan kompleksitas keseluruhannya mencapai $O(N^3)$.
+
+
+Tentu saja, kita dapat meningkatkan efisiensi dengan menghindari pembuatan string baru setiap kali. Ini dapat dilakukan ketika tidak ada ruang lagi untuk menambahkan data baru ke dalam string penampung. Salah satu cara yang bisa kita gunakan adalah dengan menggunakan Dynamic Array yang menyimpan karakter (`char`) sebagai data. Namun, karena topik ini akan dibahas lebih lanjut di artikel berikutnya, kita akan menggunakan `std::stringstream`, yang pada dasarnya menerapkan konsep yang sama dengan Dynamic Array. Berikut adalah versi terbaru dengan penggunaan `std::stringstream`.
+
+```cpp
+std::string to_string(const Array& arr) {
+  std::stringstream buff;
+  buff << "[";
+  for (int i = 0; i < length(arr); ++i) {
+    int val = get(arr, i);  // get the element at index i.
+    buff << val;            // append the element to stream.
+
+    // only add separator if the current element is not the last element.
+    if (i < arr._len - 1) {
+      buff << ", ";
+    }
+  }
+  buff << "]";
+  return buff.str();
+}
+```
+
+Dengan pendekatan ini, `buff` akan dibuat ulang hanya ketika tidak ada lagi ruang untuk menyimpan string saat dilakukan operasi `append`. Dengan demikian, secara amortized, proses penggabungan string memiliki kompleksitas $O(1)$. Oleh karena itu, dengan $N$ data, kita akan mendapatkan kompleksitas waktu $O(N * 1)$ atau lebih sederhananya $O(N)$, yang jauh lebih baik daripada $O(N^3)$ sebelumnya.
+
+
+### Fungsi `copy`
+
+Berdasarkan penjelasan di bagian ADT tentang fungsi `copy`, kita hanya perlu menyalin sejumlah minimum dari panjang `src` dan `dst`. Pendekatan paling sederhana adalah dengan mencari panjang terkecil, lalu iterasi sebanyak itu untuk mengambil data dari `src` dan memasukkannya ke `dst` menggunakan operasi `set`.
+
+```cpp
+int copy(const Array& src, Array& dst) {
+  // k is the smaller length.
+  int k = std::min(length(src), length(dst));
+  for (int i = 0; i < k; ++i) {
+    set(dst, i, get(src, i));
+  }
+  return k;
+}
+```
+
+Kompleksitas waktu fungsi `copy` adalah $O(K)$, dengan $K$ adalah $min(L_{src}, L_{dst})$. Sedangkan Kompleksitas ruang adalah $O(1)$.
+
+### Fungsi `clone`
+
+Fungsi `clone` lebih mudah dilakukan karena kita telah memiliki fungsi `copy`. Cara yang paling sederhana adalah dengan membuat array baru berukuran sama, lalu menggunakan fungsi `copy` untuk menyalin data.
+
+```cpp
+Array clone(const Array& arr) {
+  Array cloning = make(length(arr));
+  copy(arr, cloning);
+  return cloning;
+}
+```
+
+Kompleksitas waktu fungsi `clone` adalah $O(N)$. Sedangkan Kompleksitas ruang adalah $O(1)$.
+
+### Fungsi `dealloc`
+
+Pada fungsi `make` sebelumnya, kita menggunakan `calloc` untuk mengalokasikan memori. Jika kita melihat lebih rinci dalam [dokumentasi yang sama](https://en.cppreference.com/w/cpp/memory/c/calloc), kita diingatkan untuk memanggil fungsi `free` ketika memori tersebut tidak lagi dibutuhkan. Oleh karena itu, implementasi fungsi `dealloc` cukup sederhana, yaitu dengan memanggil `std::free` dan mengubah nilai `_len` menjadi `0`.
+
+```cpp
+void dealloc(Array& arr) {
+  std::free(arr._ptr);  // free the allocated memory in the heap.
+  arr._ptr = nullptr;   // set to nullptr to avoid dangling pointer.
+  arr._len = 0;
+}
+```
+
+Kompleksitas waktu dan ruang fungsi `dealloc` adalah $O(1)$.
+
+## Penutup
+
+Dengan implementasi ini, kita dapat mengamati mekanisme internal dari array dan memahami mengapa array hanya dapat menampung data dengan jenis tipe yang sama dan mengapa ukurannya harus tetap.
+
+Selanjutnya, kita akan membahas Dynamic Array sebagai solusi untuk menyimpan data dalam jumlah yang dinamis.

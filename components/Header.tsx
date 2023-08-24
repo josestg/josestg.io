@@ -1,6 +1,5 @@
 import siteMetadata from '@/data/siteMetadata'
 import headerNavLinks from '@/data/headerNavLinks'
-import Logo from '@/data/logo.svg'
 import Link from './Link'
 import MobileNav from './MobileNav'
 import ThemeSwitch from './ThemeSwitch'
@@ -12,8 +11,12 @@ const Header = () => {
       <div>
         <Link href="/" aria-label={siteMetadata.headerTitle}>
           <div className="flex items-center justify-between">
-            <div className="mr-3">
-              <Logo />
+            <div className="mr-3 cursor-pointer">
+              <p className="text-lg font-bold">
+                <span className="font-bold mr-2">▶</span>
+                josestg.io
+                <span className="font-bold animate-ping ml-2">_</span>
+              </p>
             </div>
           </div>
         </Link>

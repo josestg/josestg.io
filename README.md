@@ -1,6 +1,6 @@
-# [ben.codes](https://ben.codes)
+# [josestg.io](https://josestg.io)
 
-[Based on Tailwind NextJS Starter Blog](https://github.com/timlrx/tailwind-nextjs-starter-blog)
+[Fork from bendotcodes/bendotcodes](https://github.com/bendotcodes/bendotcodes)
 
 ## Scripts
 
