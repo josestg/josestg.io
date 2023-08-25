@@ -1,13 +1,13 @@
 /** @type {import("pliny/config").PlinyConfig } */
 const siteMetadata = {
-  title: 'josestg.io',
+  title: 'josestg.com',
   author: 'Jose Sitanggang',
-  headerTitle: 'josestg.io',
+  headerTitle: 'josestg.com',
   description: 'My thoughts on software engineering and computer science',
   language: 'en-us',
   theme: 'system',
-  siteUrl: 'https://josestg.io',
-  siteRepo: 'https://github.com/josestg/josestg.io',
+  siteUrl: 'https://josestg.com',
+  siteRepo: 'https://github.com/josestg/josestg.com',
   siteLogo: '/static/images/logo.svg',
   socialBanner: '/static/images/twitter-card.png',
   email: 'josealfredositanggang@gmail.com',
@@ -19,7 +19,7 @@ const siteMetadata = {
   locale: 'en-US',
   analytics: {
     googleAnalytics: {
-      googleAnalyticsId: 'G-7LG3NNV50C',
+      googleAnalyticsId: 'G-9WRM2899TP',
     },
   },
   comments: {

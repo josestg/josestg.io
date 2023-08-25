@@ -1,4 +1,4 @@
-# [josestg.io](https://josestg.io)
+# [josestg.com](https://josestg.com)
 
 [Fork from bendotcodes/bendotcodes](https://github.com/bendotcodes/bendotcodes)
 

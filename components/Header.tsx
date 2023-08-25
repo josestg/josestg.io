@@ -14,7 +14,7 @@ const Header = () => {
             <div className="mr-3 cursor-pointer">
               <p className="text-lg font-bold">
                 <span className="font-bold mr-2">▶</span>
-                josestg.io
+                josestg.com
                 <span className="font-bold animate-ping ml-2">_</span>
               </p>
             </div>

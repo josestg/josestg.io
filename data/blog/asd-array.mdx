@@ -34,7 +34,7 @@ Abstract Data Type (ADT) adalah kontrak yang menggambarkan perilaku dari suatu t
 
 Dalam implementasinya, array adalah sebuah tipe data bentukan, yang berarti array juga dapat memiliki Abstract Data Type (ADT). Berikut ini adalah beberapa contoh ADT yang sering digunakan pada array.
 
-### Tipe Bentukan `Array`
+### Tipe Bentukan Array
 
 ```cpp
 typedef struct Array {
@@ -43,35 +43,31 @@ typedef struct Array {
 } Array;
 ```
 
-Struct `Array` memiliki dua properti, yaitu `_ptr` dan `_len` (keduanya menggunakan awalan `_` hanya untuk memberikan klarifikasi bahwa ini adalah properti).
+Struct Array memiliki dua properti, yaitu `_ptr` dan `_len` (keduanya menggunakan awalan `_` hanya untuk memberikan klarifikasi bahwa ini adalah properti).
 
 `_ptr` adalah sebuah pointer ke tipe data `int` (`int*`). Properti ini akan merujuk ke alamat pertama dari blok memori yang dialokasikan. Ingat pada rumus sebelumnya, kita hanya perlu mengetahui alamat data pertama.
 
-`_len` adalah sebuah bilangan bulat yang menyimpan informasi tentang panjang `Array`. Ini digunakan untuk validasi rentang indeks, untuk mencegah terjadinya Segmentation Fault.
+`_len` adalah sebuah bilangan bulat yang menyimpan informasi tentang panjang Array. Ini digunakan untuk validasi rentang indeks, untuk mencegah terjadinya Segmentation Fault.
 
-### Fungsi `make`
+### Fungsi make
 
 ```cpp
 Array make(int n);
 ```
 
-Fungsi `make` digunakan untuk membuat `Array` baru dengan ukuran $n$, sehingga `Array` dapat menampung sebanyak $n$ data. Nilai yang dikembalikan oleh fungsi `make` adalah sebuah `Array` yang awalnya memiliki semua elemen bernilai `0` (nol).
+Fungsi `make` digunakan untuk membuat Array baru dengan ukuran $n$, sehingga Array dapat menampung sebanyak $n$ data. Nilai yang dikembalikan oleh fungsi `make` adalah sebuah Array yang awalnya memiliki semua elemen bernilai `0` (nol).
 
-### Fungsi `get`
+### Fungsi get
 
 ```cpp
 int get(const Array &arr, int idx);
 ```
 
-Fungsi `get` digunakan untuk mengakses data pada index ke-`idx` dalam `Array`. Fungsi `get` mengembalikan data bertipe `int` atau mengembalikan `error` jika `idx` lebih besar dari $N-1$ atau kurang dari $0$.
+Fungsi `get` digunakan untuk mengakses data pada index ke-`idx` dalam Array. Fungsi `get` mengembalikan data bertipe `int` atau mengembalikan `error` jika `idx` lebih besar dari $N-1$ atau kurang dari $0$.
 
-> **PERHATIAN**:
->
-> Pada fungsi `get`, `Array &arr` berarti bahwa fungsi tersebut menerima referensi ke `Array`. Penambahan `const` di depannya mengindikasikan bahwa fungsi `get` hanya diizinkan untuk membaca data dari `Array`. Oleh karena itu, jika fungsi `get` mencoba untuk mengubah data dalam `Array`, akan terjadi error pada saat kompilasi.
->
-> Biasanya ini disebut sebagai **Read-Only Reference** atau **Immutable Reference**.
+Perhatikan, pada fungsi `get`, `Array &arr` berarti bahwa fungsi tersebut menerima referensi ke Array. Penambahan `const` di depannya mengindikasikan bahwa fungsi `get` hanya diizinkan untuk membaca data dari Array. Oleh karena itu, jika fungsi `get` mencoba untuk mengubah data dalam Array, akan terjadi error pada saat kompilasi. Biasanya ini disebut sebagai **Read-Only Reference** atau **Immutable Reference**.
 
-### Fungsi `set`
+### Fungsi set
 
 ```cpp
 void set(Array &arr, int idx, int val);
@@ -79,52 +75,50 @@ void set(Array &arr, int idx, int val);
 
 Fungsi `set` digunakan untuk memasukkan data `val` ke indeks ke-`idx`. Jika `idx` lebih besar dari $N-1$ atau lebih kecil dari $0$, maka fungsi `set` akan mengembalikan `error`.
 
-> **PERHATIAN**:
->
-> Fungsi `set` menerima `Array &arr` (tanpa `const`), yang berarti fungsi `set` dapat membaca dan juga mengubah data dalam `Array`.
+Perhatikan, pada fungsi `set` menerima `Array &arr` (tanpa `const`), yang berarti fungsi `set` dapat membaca dan juga mengubah data dalam Array.
 
 
-### Fungsi `length`
+### Fungsi length
 
 ```cpp
 int length(const Array &arr);
 ```
 
-Fungsi `length` digunakan untuk mendapatkan panjang `Array`. Nilai yang dikembalikan oleh fungsi ini adalah $n$, yang sebelumnya diberikan pada fungsi `make`. 
+Fungsi `length` digunakan untuk mendapatkan panjang Array. Nilai yang dikembalikan oleh fungsi ini adalah $n$, yang sebelumnya diberikan pada fungsi `make`. 
 
-### Fungsi `to_string`
+### Fungsi to_string
 
 ```cpp
 std::string to_string(const Array &arr);
 ```
 
-Fungsi `to_string` digunakan untuk membuat representasi `Array` dalam bentuk `string`. Jika kita menggunakan contoh dari gambar sebelumnya, maka hasil yang dikembalikan oleh fungsi ini adalah `"[1, 1, 2, 3, 5, 8]"`. Fungsi ini sangat bermanfaat bagi kita selama proses debugging.
+Fungsi `to_string` digunakan untuk membuat representasi Array dalam bentuk `string`. Jika kita menggunakan contoh dari gambar sebelumnya, maka hasil yang dikembalikan oleh fungsi ini adalah `"[1, 1, 2, 3, 5, 8]"`. Fungsi ini sangat bermanfaat bagi kita selama proses debugging.
 
 
-### Fungsi `copy`
+### Fungsi copy
 
 ```cpp
 int copy(const Array &src, Array &dst);
 ```
 
-Fungsi `copy` digunakan untuk menyalin data dari `Array` sumber (`src`) ke `Array` tujuan (`dst`). Fungsi ini mengembalikan nilai bertipe `int`, yang mewakili jumlah data yang berhasil disalin. Fungsi `copy` harus memenuhi persyaratan berikut:
+Fungsi `copy` digunakan untuk menyalin data dari Array sumber (`src`) ke Array tujuan (`dst`). Fungsi ini mengembalikan nilai bertipe `int`, yang mewakili jumlah data yang berhasil disalin. Fungsi `copy` harus memenuhi persyaratan berikut:
 
-1. Jika $L_{src} = L_{dst}$, maka semua data di `src` akan sama dengan data di `dst`.
-2. Jika $L_{src} < L_{dst}$, hanya $L_{src}$ data pertama dari `src` yang akan disalin ke `dst`. Data di `dst` mulai dari posisi ke-$L_{src}+1$ hingga $L_{dst}$ tidak akan diubah. Sebagai contoh: `src=[1, 2, 3]` dan `dst=[4, 5, 6, 7, 8]`, setelah operasi `copy(src, dst)`, `src=[1, 2, 3]` dan `dst=[1, 2, 3, 7, 8]`.
-3. Jika $L_{src} > L_{dst}$, hanya $L_{dst}$ data dari `src` yang akan disalin ke `dst`. Sebagai contoh: `src=[1, 2, 3, 4, 5]` dan `dst=[6, 7, 8]`, setelah operasi `copy(src, dst)`, `src=[1, 2, 3, 4, 5]` dan `dst=[1, 2, 3]`.
-4. Setelah operasi `copy`, jika terjadi perubahan data di `src`, data di `dst` tidak seharusnya terpengaruh. Jika perubahan terjadi di `dst`, maka `src` juga tidak boleh berubah.
+1. Jika $L_{src} = L_{dst}$, maka semua data di Array sumber akan sama dengan data di Array tujuan.
+2. Jika $L_{src} < L_{dst}$, hanya $L_{src}$ data pertama dari Array sumber yang akan disalin ke Array tujuan. Data di Array tujuan mulai dari posisi ke-$L_{src}+1$ hingga $L_{dst}$ tidak akan diubah. Sebagai contoh: `src=[1, 2, 3]` dan `dst=[4, 5, 6, 7, 8]`, setelah operasi `copy(src, dst)`, `src=[1, 2, 3]` dan `dst=[1, 2, 3, 7, 8]`.
+3. Jika $L_{src} > L_{dst}$, hanya $L_{dst}$ data dari Array sumber yang akan disalin ke Array tujuan. Sebagai contoh: `src=[1, 2, 3, 4, 5]` dan `dst=[6, 7, 8]`, setelah operasi `copy(src, dst)`, `src=[1, 2, 3, 4, 5]` dan `dst=[1, 2, 3]`.
+4. Setelah operasi `copy`, jika terjadi perubahan data di Array sumber, data di Array tujuan tidak seharusnya terpengaruh. Jika perubahan terjadi di `dst`, maka `src` juga tidak boleh berubah.
 
-Dengan $L_{src}$ adalah panjang dari `Array` sumber, dan $L_{dst}$ adalah panjang dari `Array` tujuan. Dengan demikian, dapat disimpulkan bahwa nilai yang dikembalikan oleh fungsi `copy` selalu adalah $min(L_{src}, L_{dst})$.
+Dengan $L_{src}$ adalah panjang dari Array sumber, dan $L_{dst}$ adalah panjang dari Array tujuan. Dengan demikian, dapat disimpulkan bahwa nilai yang dikembalikan oleh fungsi `copy` selalu adalah $min(L_{src}, L_{dst})$.
 
-### Fungsi `clone`
+### Fungsi clone
 
 ```cpp
 Array clone(const Array &arr);
 ```
 
-Fungsi `clone` digunakan untuk membuat sebuah `Array` baru yang memiliki panjang dan data yang sama dengan `Array` sumber. Fungsi `clone` harus mengembalikan `Array` yang sepenuhnya terpisah dari `Array` sumber, sehingga modifikasi pada `Array` sumber tidak akan mempengaruhi `Array` hasil kloning, dan sebaliknya.
+Fungsi `clone` digunakan untuk membuat sebuah Array baru yang memiliki panjang dan data yang sama dengan Array sumber. Fungsi `clone` harus mengembalikan Array yang sepenuhnya terpisah dari Array sumber, sehingga modifikasi pada Array sumber tidak akan mempengaruhi Array hasil kloning, dan sebaliknya.
 
-### Fungsi `dealloc`
+### Fungsi dealloc
 
 ```cpp
 void dealloc(Array &arr);
@@ -137,7 +131,7 @@ Fungsi terakhir adalah `dealloc`, yang digunakan untuk melepaskan memori yang di
 
 Sebagai disclaimer, implementasi ini sengaja tidak menggunakan OOP dan `template` karena target dari artikel ini adalah mahasiswa ilmu komputer yang sedang mengambil mata kuliah Algoritma dan Struktur Data. Prasyarat dari mata kuliah tersebut hanya mencakup pemrograman dasar. Namun, jika Anda sudah berpengalaman dalam OOP dan `template`, Anda bisa mengembangkan implementasi ini dengan menggunakan konsep tersebut sebagai bahan latihan.
 
-### Fungsi `make`
+### Fungsi make
 
 Agar dapat mengimplementasikan fungsi `make`, penting untuk memahami bagaimana memesan memori secara kontigu yang dapat menampung sebanyak $n$-buah `integer` dan menginisialisasi semua data menjadi nilai `zero-value` dari tipe data yang digunakan. Dalam implementasi ini, kita menggunakan tipe data `integer`, di mana nilai `zero-value` adalah `0` (nol).
 
@@ -164,9 +158,9 @@ Perlu dilakukan pengecekan untuk memeriksa apakah `ptr == nullptr`, karena berda
 Dari implementasi ini, dapat disimpulkan bahwa kompleksitas waktu dan ruangnya adalah $O(1)$, bukan $O(N)$, karena pada dasarnya kita mengalokasikan satu blok memori tunggal yang secara logis dibagi menjadi $N$ partisi secara merata.
 
 
-### Fungsi `get`
+### Fungsi get
 
-Seperti yang telah kita diskusikan sebelumnya, untuk membaca data yang terdapat dalam `Array`, kita memerlukan alamat data dalam memori. Kita dapat menggunakan rumus yang telah kita buat sebelumnya, yaitu:
+Seperti yang telah kita diskusikan sebelumnya, untuk membaca data yang terdapat dalam Array, kita memerlukan alamat data dalam memori. Kita dapat menggunakan rumus yang telah kita buat sebelumnya, yaitu:
 
 $$
 A_{i} = A_{0} + (i \times T)
@@ -201,7 +195,7 @@ Seperti yang ditunjukkan dalam kode di atas, dilakukan pengecekan terhadap renta
 
 Dari implementasi ini, dapat disimpulkan bahwa kompleksitas waktu dan ruang fungsi `get` adalah $O(1)$, karena dengan menggunakan *Pointer Arithmetic*, kita mampu menghitung alamat memory tujuan secara langsung.
 
-### Fungsi `set`
+### Fungsi set
 
 Fungsi `set` mengikuti pendekatan yang serupa dengan fungsi `get`, dengan perbedaan pada bagian akhir. Pada fungsi `get`, kita membaca data dari alamat tertentu, sedangkan pada fungsi `set`, kita menuliskan data ke alamat tersebut. Oleh karena itu, perubahan yang diperlukan adalah mengganti baris `int  val  = *addr;` menjadi `*addr = val;`, seperti yang terlihat pada kode berikut.
 
@@ -217,7 +211,7 @@ void set(Array& arr, int idx, int val) {
 
 Sama dengan fungsi `get`, fungsi `set` juga kompleksitas waktu dan ruang $O(1)$.
 
-### Fungsi `length`
+### Fungsi length
 
 Fungsi `length` sangat simple karena kita telah menyimpan nilai $n$ saat menggunakan fungsi `make`. Oleh karena itu, kita hanya perlu mengembalikan nilai $n$ yang disimpan dalam `_len`.
 
@@ -227,9 +221,9 @@ int length(const Array& arr) { return arr._len; }
 
 Kompleksitas waktu dan ruang fungsi `length` adalah $O(1)$.
 
-### Fungsi `to_string`
+### Fungsi to_string
 
-Logika untuk membuat representasi string dari `Array` sangat sederhana. Kita hanya perlu membuat sebuah string penampung, lalu melakukan iterasi dari indeks 0 hingga indeks $N-1$, dan pada setiap iterasi membaca data dari indeks tersebut menggunakan fungsi `get`, kemudian menggabungkannya dengan string penampung. Untuk lebih memahami, perhatikan kode di bawah ini.
+Logika untuk membuat representasi string dari Array sangat sederhana. Kita hanya perlu membuat sebuah string penampung, lalu melakukan iterasi dari indeks 0 hingga indeks $N-1$, dan pada setiap iterasi membaca data dari indeks tersebut menggunakan fungsi `get`, kemudian menggabungkannya dengan string penampung. Untuk lebih memahami, perhatikan kode di bawah ini.
 
 ```cpp
 std::string to_string(const Array& arr) {
@@ -252,7 +246,7 @@ std::string to_string(const Array& arr) {
 
 Kode di atas sudah benar, namun kurang efisien karena penggabungan string menggunakan operasi `+` akan menghasilkan pembuatan string baru. Ini terjadi karena string bersifat immutable. Di dalam bahasa pemrograman C++, string diimplementasikan dengan menggunakan Dynamic Array. Pada saat string dibuat, nilai `capacity` sama dengan `length`, sehingga setiap operasi `+` atau penggabungan akan membuat string baru.
 
-Karena kita memiliki $N$ data dalam `Array`, dan setiap operasi penggabungan akan memerlukan waktu $O(M^2)$, di mana $M$ adalah panjang string sebelum penggabungan. Oleh karena itu, total kompleksitasnya akan menjadi $O(N \times M^2)$. Karena dalam kasus ini nilai $M$ tidak jauh beda $N$, kita bisa menuliskan kompleksitas keseluruhannya mencapai $O(N^3)$.
+Karena kita memiliki $N$ data dalam Array, dan setiap operasi penggabungan akan memerlukan waktu $O(M^2)$, di mana $M$ adalah panjang string sebelum penggabungan. Oleh karena itu, total kompleksitasnya akan menjadi $O(N \times M^2)$. Karena dalam kasus ini nilai $M$ tidak jauh beda $N$, kita bisa menuliskan kompleksitas keseluruhannya mencapai $O(N^3)$.
 
 
 Tentu saja, kita dapat meningkatkan efisiensi dengan menghindari pembuatan string baru setiap kali. Ini dapat dilakukan ketika tidak ada ruang lagi untuk menambahkan data baru ke dalam string penampung. Salah satu cara yang bisa kita gunakan adalah dengan menggunakan Dynamic Array yang menyimpan karakter (`char`) sebagai data. Namun, karena topik ini akan dibahas lebih lanjut di artikel berikutnya, kita akan menggunakan `std::stringstream`, yang pada dasarnya menerapkan konsep yang sama dengan Dynamic Array. Berikut adalah versi terbaru dengan penggunaan `std::stringstream`.
@@ -278,7 +272,7 @@ std::string to_string(const Array& arr) {
 Dengan pendekatan ini, `buff` akan dibuat ulang hanya ketika tidak ada lagi ruang untuk menyimpan string saat dilakukan operasi `append`. Dengan demikian, secara amortized, proses penggabungan string memiliki kompleksitas $O(1)$. Oleh karena itu, dengan $N$ data, kita akan mendapatkan kompleksitas waktu $O(N * 1)$ atau lebih sederhananya $O(N)$, yang jauh lebih baik daripada $O(N^3)$ sebelumnya.
 
 
-### Fungsi `copy`
+### Fungsi copy
 
 Berdasarkan penjelasan di bagian ADT tentang fungsi `copy`, kita hanya perlu menyalin sejumlah minimum dari panjang `src` dan `dst`. Pendekatan paling sederhana adalah dengan mencari panjang terkecil, lalu iterasi sebanyak itu untuk mengambil data dari `src` dan memasukkannya ke `dst` menggunakan operasi `set`.
 
@@ -295,7 +289,7 @@ int copy(const Array& src, Array& dst) {
 
 Kompleksitas waktu fungsi `copy` adalah $O(K)$, dengan $K$ adalah $min(L_{src}, L_{dst})$. Sedangkan Kompleksitas ruang adalah $O(1)$.
 
-### Fungsi `clone`
+### Fungsi clone
 
 Fungsi `clone` lebih mudah dilakukan karena kita telah memiliki fungsi `copy`. Cara yang paling sederhana adalah dengan membuat array baru berukuran sama, lalu menggunakan fungsi `copy` untuk menyalin data.
 
@@ -309,7 +303,7 @@ Array clone(const Array& arr) {
 
 Kompleksitas waktu fungsi `clone` adalah $O(N)$. Sedangkan Kompleksitas ruang adalah $O(1)$.
 
-### Fungsi `dealloc`
+### Fungsi dealloc
 
 Pada fungsi `make` sebelumnya, kita menggunakan `calloc` untuk mengalokasikan memori. Jika kita melihat lebih rinci dalam [dokumentasi yang sama](https://en.cppreference.com/w/cpp/memory/c/calloc), kita diingatkan untuk memanggil fungsi `free` ketika memori tersebut tidak lagi dibutuhkan. Oleh karena itu, implementasi fungsi `dealloc` cukup sederhana, yaitu dengan memanggil `std::free` dan mengubah nilai `_len` menjadi `0`.
 
