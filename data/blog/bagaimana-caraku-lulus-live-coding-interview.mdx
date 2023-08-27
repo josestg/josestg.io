@@ -1,0 +1,189 @@
+---
+title: 'Rumus Jitu yang Membuat Saya Lulus Live Coding Interview'
+date: '2023-08-22'
+tags: ['devstory', 'data-structure', 'go', 'code-interview']
+draft: false
+summary: Hanya 4 langkah, namum berhasil membuat saya lulus.
+images: []
+---
+
+Live coding pada saat interview menurutku salah satu tahap yang menegangkan. Karena soal diberikan secara langsung saat itu, dan kita diberi waktu terbatas untuk menyelesaikannya. Terkadang, soal yang diberikan sebenarnya cukup mudah, namun karena terlalu semangat jadinya gugup dan berujung pada hasil yang kurang baik. 
+Saya sendiri pernah mengalami hal ini; karena gugup, saya malah lupa algoritma binary search.
+
+
+Pada kesempatan lain, saya juga tidak lulus karena saya kurang interaktif. Saya ingat waktu itu saya terlalu fokus mengerjakan soal, 
+sehingga lupa untuk menjelaskan pendekatan yang saya gunakan. Meskipun saya menjelaskan solusi di bagian akhir dan solusinya ternyata benar, mereka kurang puas karena saya tidak berinteraksi dengan mereka selama 20 menit. Saya bersyukur pada saat itu pewawancara memberikan saran berharga, yaitu wawancara adalah dialog dua arah, termasuk live coding. Mereka menyarankan agar sebelum menulis kode, kita sebaiknya menjelaskan langkah-langkah yang akan kita ambil, sehingga mereka juga dapat mengikutinya. Terutama pada bagian yang terlihat rumit, kita perlu menjelaskan mengapa langkah-langkah tertentu diperlukan. Karena setiap kali menulis kode kita juga sudah menjelaskan, maka ketika solusinya selesai, penjelasan pun juga selesai, dengan demikian terjadi interaksi dua arah selama pengerjaan.
+
+Karena pengalaman ini saya mencari "rumus jitu" untuk coding interview, yang akhirnya mempertemukan saya dengan buku [Cracking the Coding Interview](https://www.crackingthecodinginterview.com/). Buku ini sangat saya rekomendasikan. Kalau kalian sudah baca buku ini, kalian akan melihat bahwa rumus yang saya gunakan mirip dengan yang ada di buku. Tidak bisa dipungkiri, karena memang saya belajar dari buku tersebut. 
+
+Jadi apa "rumus jitu" yang saya gunakan hingga saat ini? Rumus yang saya gunakan dibagi menjadi 4 tahap yaitu:
+
+## Tahap I: Pastikan Kita Memahami Soal yang Diberikan 
+
+Ketika diberikan sebuah soal, langkah pertama yang harus kita lakukan adalah mencoba untuk memparafrase soal tersebut menggunakan bahasa kita sendiri. Hal ini bertujuan untuk memastikan pemahaman kita sejalan dengan apa yang ingin disampaikan dalam wawancara. Setelah kita dan pewawancara memiliki pemahaman yang sama, langkah berikutnya adalah mengklarifikasi batasan masalah yang ada. Untuk mempermudah pemahaman, berikut contoh percakapan antara saya dengan pewawancara.
+
+**Pewawancara**: Saya punya sebuah soal, yaitu kamu diminta membuat sebuah fungsi untuk memeriksa apakah terdapat karakter yang duplikat dalam sebuah string. Waktu yang kamu miliki adalah 20 menit.
+
+**Saya**: Sebelum aku mulai menulis kode, izin untuk mengonfirmasi. Jadi, yang diharapkan adalah saya perlu membuat sebuah fungsi yang menerima input berupa sebuah string. Fungsi tersebut akan mengembalikan nilai true jika terdapat karakter yang duplikat, dan false jika tidak ada duplikat. Apakah pemahaman saya sudah benar, Pak?
+
+**Pewawancara**: Iya benar.
+
+**Saya**: Karena inputnya berupa string, apakah ada batasan karakter, ya Pak? Misalnya, apakah spasi dan simbol juga diperbolehkan, atau hanya huruf saja yang diperbolehkan?
+
+**Pewawancara**: Untuk saat ini, mari kita sederhanakan. Input string hanya akan terdiri dari huruf saja, yakni dari A hingga Z.
+
+**Saya**: Apakah huruf yang digunakan bersifat case sensitif, Pak?
+
+**Pewawancara**: Oh iya, jadi untuk saat ini, stringnya hanya akan terdiri dari huruf kecil saja.
+
+**Saya**: Baik, sepertinya saya sudah memahami batasan masalahnya dengan jelas. Saya akan mencoba menyelesaikannya menggunakan solusi yang paling sederhana terlebih dahulu, Pak.
+
+**Pewawancara**: Ok, silahkan.
+
+Perhatikan, di sini kita melakukan tanya jawab untuk mendapatkan persyaratan dari masalah yang telah diberikan. Dengan begitu, kita dapat merumuskan solusi yang lebih terarah.
+
+
+## Tahap II: Jelaskan sebelum Koding
+
+Setelah tahap I selesai, sebaiknya kita tidak langsung koding. Tetapi kita menjelaskan terlebih dahulu pendekatan yang akan kita gunakan. Hal ini bermanfaat agar pewawancara dapat mengikuti alur pikiran kita, dan mungkin juga mendapatkan saran dari pewawancara. Untuk memberikan gambaran yang lebih jelas, mari perhatikan contoh percakapan berikut:
+
+*(...lanjutan percakapan sebelumnya...)*
+
+**Saya**: Baik, sebelum saya lanjut ke tahap koding, izinkan saya untuk menjelaskan gambaran umum dari solusi yang akan saya buat, Pak. Saya akan memulainya dengan pendekatan yang paling sederhana, dan jika ada kesempatan, saya akan melakukan improvement. Langkah pertama yang akan saya lakukan adalah iterasi melalui setiap karakter dalam string. Selanjutnya, saya akan melakukan iterasi lagi di dalam iterasi pertama untuk memeriksa apakah ada karakter lain yang muncul setelah karakter saat ini. Dengan demikian, saya akan menggunakan nested loop. Dari pendekatan saya, apakah ada masukan dari Bapak? Jika tidak, maka akan saya lanjutkan ke koding.
+
+**Pewawancara**: Belum ada, silahkan.
+
+Pada tahap ini, selain menjelaskan agar pewawancara dapat mengikuti solusi yang akan kita implementasikan, penting juga untuk memberitahukan kepada pewawancara bahwa kita akan mulai dengan solusi yang sederhana terlebih dahulu. Namun, kita tetap terbuka untuk melakukan improvement jika dibutuhkan, yang mana ini sejalan dengan tahap III.
+
+## Tahap III: Emphasize Correctness over Optimization
+
+Sering kali dalam sesi wawancara, kita merasa tidak sabar dan ingin segera menunjukkan solusi yang paling optimal. Misalnya, pada contoh soal sebelumnya, kita mungkin langsung melompat ke solusi optimal karena mungkin kita sudah pernah menyelesaikan soal tersebut pada saat berlatih. Namun, penting untuk diingat bahwa tidak semua soal pernah kita lihat pada saat berlatih. 
+
+Oleh karena itu akan lebih aman untuk menggunakan solusi yang sederhana terlebih dahulu, yang mana biasanya tidak yang paling optimal. Selain ini mempermudah kita, ini juga memberikan kita kesempatan untuk melakukan improvement. Seperti pada contoh di tahap II, di mana saya menjelaskan solusi yang paling sederhana, yang mana jika diterjemahkan kedalam kode terlihat seperti berikut:
+
+```go
+func hasDuplicate(s string) bool {
+	n := len(s)
+	for i := 0; i < n; i++ {
+		// compare with the rest of the string.
+		for j := i + 1; j < n; j++ {
+			if s[j] == s[i] {
+				return true
+			}
+		}
+	}
+	return false
+}
+```
+
+> Perlu diingat, bahwa selama proses koding, kita juga tetap melakukan interaksi dengan pewawancara.
+
+Biasanya, setelah kita berhasil menyelesaikan soal dengan benar, pewawancara akan mengajukan pertanyaan mengenai kompleksitas waktu dan ruang dari solusi kita. Jika pewawancara tidak mengajukan pertanyaan tersebut, sebaiknya kita yang menginisiasi pembahasan tersebut. Hal ini memperlihatkan kemampuan kita dalam menganalisis algoritma serta memberi kesempatan bagi kita untuk menunjukkan pemahaman kita terhadap solusi yang lebih optimal.
+
+Misal lanjutan percakapan dengan pewawancara seperti berikut:
+
+**Pewawancara**: Solusimu sudah benar. Sekarang, coba kamu jelaskan, berapa kira-kira kompleksitas waktu dan kompleksitas ruang dari solusi ini?
+
+**Saya**: Berdasarkan kode tersebut, langkah pertama yang saya lakukan adalah melakukan iterasi sebanyak $n$, dengan $n$ adalah panjang dari string input. Selanjutnya, dalam setiap iterasi dari loop pertama, saya juga melakukan iterasi sebanyak $n - i - 1$ dalam loop kedua. Meskipun iterasi kedua semakin singkat seiring dengan bertambahnya nilai $i$, jumlah total iterasi dalam loop kedua tetap berjumlah $n$. Karena itu, kompleksitas waktu totalnya adalah $n \times n$ atau $O(n^2)$. Sementara itu, untuk kompleksitas ruang, tetap berada pada $O(1)$ karena tidak ada penggunaan ruang tambahan.
+
+**Pewawancara**: Ok bagus, apakah ini solusi terbaik atau kamu masih bisa improve solusi ini?
+
+Perhatikan, ini adalah salah satu tujuan mengapa menggunakan solusi sederhana lebih dahulu. Karena jika kita sudah tawarkan yang paling optimal pertama, akan sangat sulit melakukan improvement yang lebih baik. Karena saya tadinya menggunakan solusi yang belum optimal sekarang saya punya kesempatan untuk menunjukkannya.
+
+> Ingat, pada Tahap I kita telah memperoleh batasan bahwa input yang diberikan hanya berupa string yang terdiri dari huruf kecil. Dengan demikian, hanya terdapat 26 kemungkinan karakter yang mungkin muncul. Informasi ini dapat kita manfaatkan untuk melakukan improvement.
+
+**Saya**: Bisa, Pak. Berdasarkan batasan input yang telah dijelaskan sebelumnya, string hanya terdiri dari huruf kecil. Oleh karena itu, hanya terdapat 26 kemungkinan karakter, meskipun panjang string dapat bervariasi. Mengacu pada [Pigeonhole Principle](https://en.wikipedia.org/wiki/Pigeonhole_principle), jika ada $N$-buah sarang burung dan lebih dari $N$-ekor burung, maka akan ada setidaknya satu sarang yang dihuni oleh lebih dari 1-ekor burung. Dalam konteks ini, ketika panjang string melebihi 26, sudah pasti akan ada karakter duplikat karena untuk mencapai panjang tersebut, string harus menggunakan karakter yang sudah ada. Begitu juga pada string dengan panjang 1, duplikasi tidak mungkin terjadi. Kemudian, dalam kasus panjang string $[2, 26]$, saya memutuskan untuk menggunakan array boolean dengan panjang 26. Alasannya adalah setiap karakter dalam bahasa Go memiliki representasi Unicode berupa angka. Misalnya, karakter `a` setara dengan angka `97` dan karakter `z` setara dengan angka `122` (97 + 26 - 1). Angka-angka dalam representasi Unicode ini bisa digunakan sebagai indeks untuk array. Namun, karena panjang array yang saya gunakan adalah 26, jangkauan indeksnya adalah $[0, 25]$. Oleh karena itu, saya melakukan normalisasi rentang `97-122` menjadi `0-25` dengan cara mengurangkan 97, yang merupakan batas terkecilnya. Ketika array dibuat, semua nilai diinisialisasi sebagai `false`, dan nantinya nilai akan diubah menjadi `true` jika karakter tersebut ditemukan dalam string yang diberikan. Agar lebih jelas akan saya tunjukkan didalam kode berikut. (koding...)
+
+
+Misal solusi yang saya buat adalah seperti berikut:
+```go
+func hasDuplicate(s string) bool {
+	n := len(s)
+	if n > 26 {
+		return true
+	}
+
+	if n == 1 {
+		return false
+	}
+
+	var charset [26]bool
+	for i := 0; i < n; i++ {
+		idx := s[i] - 'a' // 'a' == 97
+		if charset[idx] {
+			return true
+		}
+		charset[idx] = true
+	}
+	return false
+}
+```
+
+**Saya**: (...lanjut) sekarang karena inner loop sudah tidak ada, hanya ada $n$ iterasi yang tersisa. Sehingga, kompleksitas waktu menjadi $O(n)$, atau lebih tepatnya $O(\min(n, 26))$. Sementara itu, kompleksitas ruang adalah $O(26)$ yang sebenarnya dapat disederhanakan menjadi $O(1)$. Dengan solusi saat ini, saya berhasil meningkatkan kompleksitas waktu dari awalnya $O(n^2)$ menjadi $O(n)$, dan tetap mempertahankan kompleksitas ruang sebesar $O(1)$.
+
+**Pewawancara**: Baik, menurut saya sudah bagus ya. Saya puas dengan solusinya. Menurut kamu, apakah ini masih bisa improve lagi?
+
+Pada tahap ini, sebenarnya tidak wajib untuk melakukan improvement lagi. Namun, kita dapat mendapatkan poin tambahan jika kita mampu menunjukkan solusi yang lebih baik, terutama jika solusi tersebut diluar ekspektasi pewawancara. Oleh karena itu, penting diingat untuk tidak langsung mengungkapkan solusi yang paling optimal. Biasanya, saya lebih suka mengajukan solusi optimal kedua yang sudah terpikirkan oleh saya.
+
+Misal improvement yang saya buat adalah seperti berikut:
+
+**Saya**: Dari pemahaman saya, menurunkan kompleksitas waktu di bawah $O(\min(n, 26))$ sebenarnya tidak mungkin, karena bagaimanapun kita harus melakukan pengecekan terhadap setiap karakter. Namun, terdapat sedikit pemborosan dalam hal kompleksitas ruang. Meskipun kompleksitasnya pada dasarnya sudah konstan, jika kita menganalisis lebih mendalam, kita akan melihat bahwa `charset` hanya menyimpan informasi dalam bentuk `true` atau `false`, dan dalam bahasa Go, 1 boolean membutuhkan 1 byte. Oleh karena itu, untuk 26 karakter, kita memerlukan 26 byte. Namun, sebenarnya, karena rentang karakter terbatas dan nilai yang disimpan hanya `true` atau `false`, kita dapat memanfaatkan manipulasi bit di sini. Di sini, bit `1` dapat mewakili `true`, dan bit `0` mewakili `false`. Dengan pendekatan ini, kita dapat menggunakan tipe data `uint32` sebagai wadah bit. Mengingat `uint32` memiliki 32 bit, itu cukup untuk menyimpan status 26 karakter. Untuk lebih memperjelas, saya akan menunjukkan contohnya dalam kode nanti.
+
+
+```go
+func hasDuplicate(s string) bool {
+	n := len(s)
+	if n > 26 {
+		return true
+	}
+
+	if n == 1 {
+		return false
+	}
+
+	var charset uint32
+	for i := 0; i < n; i++ {
+		idx := s[i] - 'a' // 'a' == 97; 0 <= idx <= 25
+		if isSet(charset, idx) {
+			return true
+		}
+		charset = setBit(charset, idx)
+	}
+	return false
+}
+
+// setBit sets the bit at given position to 1.
+// Example:
+//
+//	setBit(0, 3) => 00000000000000000000000000001000
+//	setBit(1, 3) => 00000000000000000000000000001001
+func setBit(n uint32, pos uint8) uint32 {
+	n |= 1 << pos
+	return n
+}
+
+// isSet returns true if the bit at given position is 1.
+func isSet(n uint32, pos uint8) bool {
+	mask := uint32(1 << pos)
+	return n&mask != 0
+}
+```
+
+**Saya**: (...lanjut) dengan menggunakan `uint32`, ukuran yang diperlukan sekarang adalah `4 byte`, karena `uint32` memiliki ukuran sebesar `4 byte`. Pada pendekatan sebelumnya, dibutuhkan 26 byte. Mungkin hanya ini yang dapat saya improve sejauh ini. Apakah Anda memiliki masukan tambahan, Pak?
+
+**Pewawancara**: Bagus, menurut saya improvement yang telah Anda sampaikan sudah sangat baik. Mengingat waktu yang kita miliki telah habis, apakah Anda memiliki pertanyaan untuk ditanyakan?
+
+Pada tahap ini jangan lupa untuk memberikan pertanyaan terkait apapun kepada pewawancara.
+
+Dari percakapan sebelumnya, terlihat bahwa saya melakukan perbaikan secara bertahap. Pendekatan ini tidak hanya membantu mengurangi jumlah soal yang diberikan kepada kita, tetapi juga memberikan gambaran bagaimana kita beradaptasi dengan berbagai tingkat kesulitan dalam proses pemecahan masalah. Dari pengalaman saya, biasanya saya hanya diberikan 1-2 soal selama sesi live coding, bahkan sering kali hanya 1 soal.
+
+Sebenarnya pada saat interview ini adalah tahap terakhir dari "rumus jitu" saya. Tahap IV lebih tepatnya adalah tahap ke-0 yaitu **Practice**.
+
+## Tahap IV: Practice
+
+Tahap ini berlangsung sebelum sesi wawancara, di mana kita harus berlatih menyelesaikan berbagai jenis soal dan malakukan improvement secara bertahap. Tentunya, untuk bisa menyelesaikan soal dan melakukan improvement, diperlukan pemahaman yang kuat tentang algoritma dan struktur data. Penting untuk membiasakan diri dengan implementasi algoritma dan struktur data agar memperoleh insting yang lebih baik dalam memilih solusi yang tepat untuk setiap masalah. Pada tahap ini, saya sangat merekomendasikan membaca buku [Cracking the Coding Interview](https://www.crackingthecodinginterview.com/) dan berlatih di platform seperti Hackerrank dan LeetCode.
+
+
+## Penutup
+
+"Rumus Jitu" ini adalah hasil dari pengalaman pribadi saya, yang telah membantu saya lulus dalam sesi wawancara coding di beberapa startup di Indonesia. Tentu saja, ini tidak menjamin keberhasilan 100%, tetapi semoga panduan ini memberikan gambaran kepada teman-teman mengenai pendekatan yang saya gunakan. Mungkin suatu saat nanti, teman-teman akan mengembangkan panduan versi mereka sendiri. Terima kasih sudah meluangkan waktu untuk membaca panduan ini.
