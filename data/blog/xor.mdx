@@ -1,0 +1,66 @@
+---
+title: 'A Simple Proof of XOR Uniqueness'
+date: '2023-09-23'
+tags: ['algorithm', 'math']
+draft: false
+summary: When computers are too slow to prove correctness, mathematics rides to the rescue. That's why we need math -- even computers could use a little mathematical magic!
+images: []
+---
+
+## Motivation
+
+I have a simple algorithm to generate a unique ID, but I'm struggling to prove whether applying XOR maintains the uniqueness of the ID. As a software engineer, I wrote a simple program to check for duplicates using a fancy data structure called a bitset. Everything works well for integers that are less than 16 bits. However, for 32-bit integers, I found myself waiting too long for the result, and for int64, I ran out of memory. It's quite disappointing. Fortunately, I studied math as an undergraduate, so I decided to use mathematical proof instead. To put it in perspective, a bitset for $2^64$ members would require an astronomical amount of memory![^1]
+
+> When computers are too slow to prove correctness, mathematics rides to the rescue. That's why we need math -- even computers could use a little mathematical magic!
+
+## Hypothesis
+For any chosen positive integer $$M$$, prove that applying XOR (⊕) with any possible value of $$N$$ to $$M$$ produces a unique result for each $$N$$, where $$M, N ∈ ℤ^{+}$$.
+
+## Proof
+
+**Proof by contradiction**
+
+Let's assume that there are two different values, $$N_x$$ and $$N_y$$, such that $$N_x ⊕ M = N_y ⊕ M$$, where $$N_x ≠ N_y$$.
+
+$$
+\begin{aligned}
+N_x ⊕ M &= N_y ⊕ M \\
+(N_x ⊕ M) ⊕ M &= (N_y ⊕ M) ⊕ M
+\end{aligned}
+$$
+
+Since the left and right sides are equal, applying XOR to both sides will also be the same[^2].
+
+XOR is associative[^2]. Therefore:
+
+$$
+\begin{aligned}
+(N_x ⊕ M) ⊕ M &= N_y ⊕ (M ⊕ M)
+\end{aligned}
+$$
+
+Applying XOR to a number with itself equals 0, so $$(M ⊕ M) = 0$$[^2]. Additionally, when any number is XOR with $$0$$, it returns the number itself. By using this identity, we can simplify the equation to:
+
+$$
+\begin{aligned}
+(N_x ⊕ M) ⊕ M &= N_y ⊕ 0 \\
+(N_x ⊕ M) ⊕ M &= N_y
+\end{aligned}
+$$
+
+By doing the same operation on the left-hand side, we get:
+
+$$
+\begin{aligned}
+N_x ⊕ (M ⊕ M) &= N_y \\
+N_x ⊕ 0 &= N_y \\
+N_x &= N_y
+\end{aligned}
+$$
+
+We found $$N_x = N_y$$, contradicting our assumption of distinct $$N$$ values. This demonstrates that, to produce the same result on both sides, $$N_x$$ must equal $$N_y$$. Thus, we've proven that $$M ⊕ N$$ yields unique values (no collisions).
+
+## References
+
+[^1]:[$2^64$ bytes is enough for any human](https://lwn.net/Articles/80696)
+[^2]:[Interesting Properties of the Exclusive Or (XOR)](https://markusthill.github.io/electronics/a-few-properties-of-the-exclusive-or/)
