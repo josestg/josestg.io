@@ -9,7 +9,7 @@ images: []
 
 ## Motivation
 
-I have a simple algorithm to generate a unique ID, but I'm struggling to prove whether applying XOR maintains the uniqueness of the ID. As a software engineer, I wrote a simple program to check for duplicates using a fancy data structure called a bitset. Everything works well for integers that are less than 16 bits. However, for 32-bit integers, I found myself waiting too long for the result, and for int64, I ran out of memory. It's quite disappointing. Fortunately, I studied math as an undergraduate, so I decided to use mathematical proof instead. To put it in perspective, a bitset for $2^64$ members would require an astronomical amount of memory![^1]
+I have a simple algorithm to generate a unique ID, but I'm struggling to prove whether applying XOR maintains the uniqueness of the ID. As a software engineer, I wrote a simple program to check for duplicates using a fancy data structure called a bitset. Everything works well for integers that are less than 16 bits. However, for 32-bit integers, I found myself waiting too long for the result, and for int64, I ran out of memory. It's quite disappointing. Fortunately, I studied math as an undergraduate, so I decided to use mathematical proof instead. To put it in perspective, a bitset for $2^{64}$ members would require an astronomical amount of memory![^1]
 
 > When computers are too slow to prove correctness, mathematics rides to the rescue. That's why we need math -- even computers could use a little mathematical magic!
 
