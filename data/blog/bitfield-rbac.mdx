@@ -1,0 +1,210 @@
+---
+title: 'Bit Field Role-based Access Control (RBAC)'
+date: '2023-09-28'
+tags: ['algorithm', 'bitfield', 'bit-manipulation']
+draft: false
+summary: A compact and high-performance RBAC algorithm.
+images: []
+---
+
+Role-based Access Control (RBAC) is a mechanism that restricts system access by granting authorized users specific access rights, grouped together under a role name. This role is associated with a user, ensuring they have the required access when attempting restricted actions.
+
+To check if a certain role has access, we need to assign a name to the access. Let's consider the example below:
+
+```go
+const (
+	AccessViewEmail   = "view_email"
+	AccessViewPhone   = "view_phone"
+	AccessUpdateEmail = "update_email"
+	AccessUpdatePhone = "update_phone"
+)
+
+var Reviewer   = []string{AccessViewEmail, AccessViewPhone}
+var PhoneAdmin = []string{AccessViewPhone, AccessUpdatePhone}
+var EmailAdmin = []string{AccessViewEmail, AccessUpdateEmail}
+```
+
+To determine if a Reviewer is allowed to update the phone number, we simply need to iterate through the `Reviewer` access set until we find the string `update_email`. If we find it, they are allowed. Otherwise, access is restricted.
+
+Since the role is essentially an array of strings, we can include these roles in the JWT payload. This allows the frontend to utilize these accesses to restrict specific UI elements if the expected access is not found. Sounds good, right? Unfortunately, it would significantly increase the size of the JWT, especially for roles with many accesses. To address this issue, we typically don't include the access in the JWT. Instead, we include the role's ID and use this ID to fetch a list of accesses from the backend when needed. Overall, it works fine.
+
+But why do we use strings to name our accesses in the first place? As we've already seen, the name is simply a label for matching the access. Essentially, we can choose any data type, but because we are human, strings appear more natural to us. What if we chose numbers instead, following a specific pattern? For instance, we could use $2^k$, where $k \ge 0$.
+
+```go
+const (
+	AccessViewEmail   = 1 // 2^0
+	AccessViewPhone   = 2 // 2^1
+	AccessUpdateEmail = 4 // 2^2
+	AccessUpdatePhone = 8 // 2^3
+)
+
+var Reviewer   = []uint8{AccessViewEmail, AccessViewPhone}
+var PhoneAdmin = []uint8{AccessViewPhone, AccessUpdatePhone}
+var EmailAdmin = []uint8{AccessViewEmail, AccessUpdateEmail}
+```
+
+As we can see, there's no significant difference from the string version, and the algorithm to match the access remains the same. However, if we look one level deeper, specifically at the binary form, we can observe a unique pattern of integers in $2^k$. Let's examine the code below.
+
+```go
+const (
+	AccessViewEmail   = 0b000_0001 // 2^0 or 1
+	AccessViewPhone   = 0b000_0010 // 2^1 or 2
+	AccessUpdateEmail = 0b000_0100 // 2^2 or 4
+	AccessUpdatePhone = 0b000_1000 // 2^3 or 8
+)
+
+var Reviewer   = []uint8{AccessViewEmail, AccessViewPhone}
+var PhoneAdmin = []uint8{AccessViewPhone, AccessUpdatePhone}
+var EmailAdmin = []uint8{AccessViewEmail, AccessUpdateEmail}
+```
+
+In the code above, do you see the pattern? 
+
+The bit `1` simply shifts to the left as $k$ increases. Does this seem familiar? Yes, it's similar to an index in an array, but this time it's in binary.
+
+Cool, but why do we even need this?
+
+Because each access has a unique position for the bit `1`, we don't need an array to store multiple accesses as a role. We can combine all of them into a single number by using [disjunction](https://en.wikipedia.org/wiki/Logical_disjunction), also known as the OR bit operation. In bit manipulation, the OR operation chooses `1` if there is a  `1` in the same position of the bit. Otherwise, it chooses `0`. Sound complicated? Well, we typically define OR as something like this: `A OR B → True` when one of them is True or both of them are True. In binary terms, `A or B → 1` when both A and B are 1, or one of them is 1. This is correct, but it would be more convenient to use the first definition when working with multiple bits. Let me explain step by step below.
+
+```go
+// Bit Position: 3 2 1 0
+// A in Bit    : 0 1 0 1   In decimal, A=5
+// B in Bit    : 0 0 1 1   In decimal, B=3
+//                         Calculating C = A OR B
+//                         * To simplify, let's denote X[k] as the bit of X at position k.
+//           :       1     A[0] == 1, so C[0] is set to 1; no need to check  [0] since 1 is already found
+//           :     1 1     A[1] == 0, checking B[1], bit 1 found, so 1 is chosen for C[1]
+//           :   1 1 1     A[2] == 1, skipping B[2], choosing bit 1 for C[2]
+//           : 0 1 1 1     A[3] == 0, checking B[3], B[3 is also 0, no need to check further, so C[3] is set to 0
+//
+//
+// C         : 0 1 1 1     In decimal, C=7
+```
+
+As we can see, C is a union of A and B, meaning C contains all the bits of A and all the bits of B.
+
+Let's apply the same concept to our roles. In Go, we use `|` as the bit OR operation.
+
+```go
+const (
+	AccessViewEmail   = 0b000_0001 // 2^0 or 1
+	AccessViewPhone   = 0b000_0010 // 2^1 or 2
+	AccessUpdateEmail = 0b000_0100 // 2^2 or 4
+	AccessUpdatePhone = 0b000_1000 // 2^3 or 8
+)
+
+const Reviewer   = 0b000_0001 | 0b000_0010 // == 0b000_0011
+const PhoneAdmin = 0b000_0010 | 0b000_1000 // == 0b000_1010
+const EmailAdmin = 0b000_0001 | 0b000_0100 // == 0b000_0101
+```
+
+Now, `Reviewer`, `PhoneAdmin`, and `EmailAdmin` are just integers. There is no need for an array anymore. Impressive, right? 
+
+But how do we check if some roles have certain access? In an array, we can simply iterate and compare each element. In binary form, we cannot iterate through the bits. However, there is an operation in binary called [conjunction](https://en.wikipedia.org/wiki/Logical_conjunction), also known as the AND operator.
+
+By definition, AND chooses `1` if all operand bits are `1`. Otherwise, it chooses `0`. Since both the role and access are integers, we can use the AND operator on them. Let's see what happens in the example below.
+
+```go
+Reviewer   & AccessViewEmail   = 0b000_0011 & 0b000_0001 -> 0b000_0001
+Reviewer   & AccessViewPhone   = 0b000_0011 & 0b000_0010 -> 0b000_0010
+Reviewer   & AccessUpdateEmail = 0b000_0011 & 0b000_0100 -> 0b000_0000
+Reviewer   & AccessUpdatePhone = 0b000_0011 & 0b000_1000 -> 0b000_0000
+
+PhoneAdmin & AccessViewEmail   = 0b000_1010 & 0b000_0001 -> 0b000_0000
+PhoneAdmin & AccessViewPhone   = 0b000_1010 & 0b000_0010 -> 0b000_0010
+PhoneAdmin & AccessUpdateEmail = 0b000_1010 & 0b000_0100 -> 0b000_0000
+PhoneAdmin & AccessUpdateEmail = 0b000_1010 & 0b000_1000 -> 0b000_1000
+
+EmailAdmin & AccessViewEmail   = 0b000_0101 & 0b000_0001 -> 0b000_0001
+EmailAdmin & AccessViewPhone   = 0b000_0101 & 0b000_0010 -> 0b000_0000
+EmailAdmin & AccessUpdateEmail = 0b000_0101 & 0b000_0100 -> 0b000_0100
+EmailAdmin & AccessUpdateEmail = 0b000_0101 & 0b000_1000 -> 0b000_0000
+```
+
+We can see that applying AND to a role with certain access will return the access itself if the role contains that access. Otherwise, it returns all zeros, which is equivalent to 0 in decimal. COOL! 
+
+Now, we can do the same thing as before without any iteration. You know what? This takes **$O(1)$** time for checking if any roles have certain access. VERY COOL!
+
+Not only is this fast, but it's also compact. By using 8 bits as we do in the example, it can store up to 8 access and 255 role combinations. Let's do the math to see how much space we save compared to the string-based approach.
+
+Let's assume that each access has 10 characters, where 1 character is equivalent to 1 byte. So, if we have 8 access types, then for the role that has all access, it will take 8 x 8 x 10 = 640 bytes, plus 24 bytes for the array header, totaling 664 bytes. Using bit manipulation, it only takes 8 bits or 1 byte. **That's a 99.84% reduction in space**.
+
+There's no one-size-fits-all solution. As we're aware, most programming languages only accommodate up to 64-bit integers, which implies that we can only handle 64 possible access combinations. 
+
+But, don't worry! As engineers, we can build a "virtual integer" by combining multiple integers into an array.
+
+Imagine it like assembling building blocks. With an array of `uint64` and $N$ elements, we get $Nx6$ bits when we combine them in binary. Let's see this in action with $N=3$. But, before we proceed, we need to make a slight adjustment to the access. Since we are now using more than 64 bits, we cannot represent a number for $2^k$ when $k \ge 64$. Instead of using the access as the result of $2^k$, **we will use $k$ itself as the access**, which falls within the range of $[0, 2^{64}-1]$ (a very large range).
+
+```go
+const (
+	AccessViewEmail   = 0
+	AccessViewPhone   = 1
+	AccessUpdateEmail = 2
+	AccessUpdatePhone = 3
+
+	A64               = 64
+	A65               = 65
+
+	A135              = 135
+)
+
+type Role [3]uint64
+```
+
+`AccessViewEmail`, `AccessViewPhone`, `AccessUpdateEmail`, and `AccessUpdatePhone` are all less than 63, so they must be placed in the first integer within the Role. `A64` and `A65` should be placed in the second integer, and `A135` must be in the third integer. How do we achieve this programmatically? It's quite simple, and there are two steps involved:
+
+1. We divide the access value by 64 to determine which integer it falls into.
+2. Once we identify the correct integer, we need to determine the bit position to set to `1`. Since there are 64 bits, we can achieve this by finding the remainder when we divide the access by 64, which we'll call $L$. Then, we shift `1` left by $L$ and apply the OR operation, just as we did previously.
+
+```go
+var role Role                       // [0 0 0]
+
+// 0b... indicates that there are many zeros not printed for simplification.
+
+// Adding AccessViewEmail to the role.
+// role index (i)               = 0 / 64                   -> 0
+// bit position (L)             = 0 % 64                   -> 0
+// left-shifted (M)             = 1 << L                   -> 0b...0000_0001
+// role[i]                      = role[0] | 0b...0000_0001 -> 0b...0000_0001
+
+// Adding AccessViewPhone to the role.
+// role index (i)               = 1 / 64                   -> 0
+// bit position (L)             = 1 % 64                   -> 1
+// left-shifted (M)             = 1 << L                   -> 0b...0000_0010
+// role[i]                      = role[0] | 0b...0000_0010 -> 0b...0000_0011
+
+// Adding A64 to the role.
+// role index (i)               = 64 / 64                  -> 1
+// bit position (L)             = 64 % 64                  -> 0
+// left-shifted (M)             = 1 << L                   -> 0b...0000_0001
+// role[i]                      = role[1] | 0b...0000_0001 -> 0b...0000_0001
+
+// Adding A65 to the role.
+// role index (i)               = 65 / 64                  -> 1
+// bit position (L)             = 65 % 64                  -> 1
+// left-shifted (M)             = 1 << L                   -> 0b...0000_0010
+// role[i]                      = role[1] | 0b...0000_0010 -> 0b...0000_0011
+
+// Adding A135 to the role.
+// role index (i)               = A135 / 64                -> 2
+// bit position (L)             = A135 % 64                -> 7
+// left-shifted (M)             = 1 << L                   -> 0b...0100_0000
+// role[i]                      = role[2] | 0b...0100_0000 -> 0b...0100_0000
+
+// The updated value of roles = [0b...0000_0011, 0b...0000_0011, 0b...0100_0000]
+//                            = [7, 7, 7]
+```
+
+Using just 3 integers, we can accommodate 192 access combinations (3x64). If we require more, we can easily add more integers. Applying the same calculations as before, **we still achieve a 99.84% reduction in space**, and the time complexity remains $O(1)$ since we rely on simple division and modulo operations.
+
+**All those bit manipulation operations involving OR and AND are performed on a bit pattern called [BitField](https://en.wikipedia.org/wiki/Bit_field).**
+
+By using BitField RBAC, we can place a large set of access into a JWT payload without encountering serialization performance issues and eliminate the need for additional backend calls to fetch access for a role.
+
+You can explore this concept in action by using [this repository](https://github.com/josestg/bitfield-rbac-demo). it uses [the bitfield primitive](https://github.com/josestg/bitfield) as the underlying data structure.
+
+>Please note that, when working with JavaScript, you're limited to using just 52 out of the available 64 bits. However, this 52-bit range is still more than sufficient. [See here](https://tc39.es/ecma262/#sec-ecmascript-language-types-number-type).
+
+**Where do we go next?**
+
+Storing multiple integers can be tricky in a database. A straightforward solution is to store them as JSON or an array. Alternatively, we can store them in a minimized string format using [Run-Length Encoding](https://en.wikipedia.org/wiki/Run-length_encoding).
