@@ -131,9 +131,9 @@ Let's assume that each access has 10 characters, where 1 character is equivalent
 
 There's no one-size-fits-all solution. As we're aware, most programming languages only accommodate up to 64-bit integers, which implies that we can only handle 64 possible access combinations. 
 
-But, don't worry! As engineers, we can build a "virtual integer" by combining multiple integers into an array.
+But, don't worry! As engineers, we can build a "**Virtual Integer**" by combining multiple integers into an array.
 
-Imagine it like assembling building blocks. With an array of `uint64` and $N$ elements, we get $N\times6$ bits when we combine them in binary. Let's see this in action with $N=3$. But, before we proceed, we need to make a slight adjustment to the access. Since we are now using more than 64 bits, we cannot represent a number for $2^k$ when $k \ge 64$. Instead of using the access as the result of $2^k$, **we will use $k$ itself as the access**, which falls within the range of $[0, 2^{64}-1]$ (a very large range).
+Imagine it like assembling building blocks. With an array of `uint64` and $N$ elements, we get $N\times64$ bits when we combine them in binary. Let's see this in action with $N=3$. But, before we proceed, we need to make a slight adjustment to the access. Since we are now using more than 64 bits, we cannot represent a number for $2^k$ when $k \ge 64$. Instead of using the access as the result of $2^k$, **we will use $k$ itself as the access**, which falls within the range of $[0, 2^{64}-1]$ (a very large range).
 
 ```go
 const (

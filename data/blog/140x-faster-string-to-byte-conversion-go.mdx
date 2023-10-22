@@ -24,7 +24,7 @@ type StringHeader struct {
 }
 ```
 
-The `Data` field represents the memory address of the first item in the backing array, which is where the data is stored. The backing array has a fixed size since it is allocated, which is why a slice has a capacity (`Cap`) to allow it to grow when more space is needed to store new data. If you are interested in learning how a slice grows, please refer to my article titled "**[Exploring the Slice Internal Implementation in Go](https://josestg.com/blog/exploring-slice-internal-implementation-go)**."
+The `Data` field represents the memory address of the first item in the backing array, which is where the data is stored. The backing array has a fixed size since it is allocated, which is why a slice has a capacity (`Cap`) to allow it to grow when more space is needed to store new data. If you are interested in learning how a slice grows, please refer to my article titled "**[Exploring Go Slice Internal Implementation in C++](https://josestg.com/blog/exploring-slice-internal-implementation-go)**."
 
 
 To convert a slice of bytes to a string, we simply need to remove the Cap field and move the data pointer in `SliceHeader` to the Data field in `StringHeader`. How can we do that? Go doesn't allow us to manage memory manually as we do in C and C++. However, there is a package called [unsafe](https://pkg.go.dev/unsafe). This is a special package in Go that allows us to manage memory manually, but it's essential to remember that, in most cases, we should avoid doing this unless you require very high performance and are aware of the risks like [Use After Free](https://owasp.org/www-community/vulnerabilities/Using_freed_memory).
