@@ -1,8 +1,308 @@
 ---
-title: 'Exploring the Slice Internal Implementation in Go'
-date: '2023-10-21'
-tags: ['go', 'c', 'slice', 'dynamic-array', 'memory-allocation']
-draft: true
-summary: Unveiling the Inner Workings of Slices in Go by Reimplementing in Plain C.
+title: 'Exploring Go Slice Internal Implementation in C++'
+date: '2023-10-22'
+tags: ['go', 'c++', 'slice', 'dynamic-array', 'memory-allocation']
+draft: false
+summary: Unveiling the Inner Workings of Slices in Go by Reimplementing in C++.
 images: []
 ---
+
+This blog is based on what I learned from reading the "[Go Slices: Usage and Internals](https://go.dev/blog/slices-intro)" blog post.
+
+When I read that blog post, I got curious and wanted to create my own version of a slice in a low-level language like C++. I wanted to understand how slices work in Go on a deeper level. I also wanted to confirm something mentioned in the Go Documentation they say that: slices are always passed by value, but they don't copy all the data. Instead, they only pass a small piece of information called the [SliceHeader](https://pkg.go.dev/reflect#SliceHeader), which is just 24 bytes long. This understanding made me realize that both an empty slice and a slice with a million items have the same size, which is the size of the [SliceHeader](https://pkg.go.dev/reflect#SliceHeader).
+
+This blog will be divided into three sections. The first section will discuss the implementation, followed by the complexity analysis, and finally, the conclusion. Let's start with the implementation.
+
+## Implementation
+
+The complete code for this implementation is available on my [GitHub](https://github.com/josestg) in [this repository](https://github.com/josestg/go-slice-in-cpp).
+
+### Define a Slice Type
+
+For the `Slice` struct, I will follow the same structure as the [SliceHeader](https://pkg.go.dev/reflect#SliceHeader) in Go. For simplicity, this `Slice` is only able to store integers.
+
+```cpp
+typedef struct {
+  int *data; // For simplicity, we only support int slices.
+  int len;
+  int cap;
+} Slice;
+```
+
+
+### Make Function
+
+The `make` function creates a new `Slice` with a specified initial length and capacity. It achieves this by using `calloc` to allocate a contiguous memory block of the given size, which is initialized to the zero value. The `make` function also performs checks to ensure that the length is always less than the capacity, and that the capacity is at least 1. Furthermore, the `make` function returns the `Slice` as a value, not a pointer type.
+
+```cpp
+// Create a slice of length len and capacity cap.
+Slice make(int len, int cap) {
+  if (len > cap) {
+    throw std::runtime_error("make: len > cap");
+  }
+
+  // make sure the capacity is at least 1 and the length is at least 0.
+  len = std::max(len, 0);
+  cap = std::max(cap, 1);
+
+  // create a contiguous block of memory as the backing array for
+  // storing the actual data.
+  int *backing_array = (int *) calloc(cap, sizeof(int));
+  if (backing_array == nullptr) {
+    throw std::runtime_error("make: out of memory");
+  }
+
+  return {.data = backing_array, .len = len, .cap = cap};
+}
+```
+
+### Setter and Getter
+
+Since we don't use classes in C++, we cannot override the `[]` operator for setter and getter. However, we can define two simple functions as follows:
+
+```cpp
+// Set the value at given index.
+void set_value(Slice &s, int index, int value) {
+  if (index < 0 || index >= s.len) {
+    throw std::out_of_range("set_value: index out of range");
+  }
+  // setting the value by using pointer arithmetic.
+  *(s.data + index) = value;
+}
+
+// Get the value at given index.
+int get_value(const Slice &s, int index) {
+  if (index < 0 || index >= s.len) {
+    throw std::out_of_range("get_value: index out of range");
+  }
+  // getting the value by using pointer arithmetic.
+  return *(s.data + index);
+}
+```
+
+For `set_value`, it takes a reference to a `Slice`, and for `get_value`, it takes a read-only reference to a `Slice`. I do this intentionally to observe the behavior of passing by reference and by value in the `append` function later on.
+
+### Helper Functions for Debugging
+
+The `to_string` function returns a string representation of the `Slice`. For example, a `Slice` containing the values 1 and 2 will return `"[1, 2]"`. The other function overrides the `<<` operator to print more detailed information about the `Slice`. For the same `Slice`, the output will look like this: `"Slice{ .len=2, .cap=4, .data=[1, 2] }"`.
+
+```cpp
+std::string to_string(const Slice &s) {
+  std::stringstream stream;
+  stream << "[";
+  for (int i = 0; i < s.len; i++) {
+    stream << get_value(s, i);
+    if (i != s.len - 1) {
+      stream << ", ";
+    }
+  }
+  stream << "]";
+  return stream.str();
+}
+
+std::ostream &operator<<(std::ostream &os, const Slice &s) {
+  os << "Slice{"
+        " .len="  << s.len <<
+        " .cap="  << s.cap <<
+        " .data=" << to_string(s)
+     << " }";
+  return os;
+}
+```
+
+### The Append Function
+
+The `Append` function takes a copy of the `Slice` or the `SliceHeader` in Go and checks if there is still room for a new element. If not, it will allocate a new larger backing array and copy all the data into the newly allocated backing array. According to [this documentation](https://github.com/golang/go/blob/master/src/runtime/slice.go#L270-L272), slice growth can be either $2x$ or $1.25x$. For simplicity, a new backing array will always grow to 2x the previous capacity.
+
+
+We can use `calloc` here, but by using `realloc`, we don't need to deallocate the previous backing array.
+
+```cpp
+// Append a new element to the slice.
+Slice append(Slice s, int v) {
+  if (s.len == s.cap) {
+    // grow the backing array by 2x or 1 if the capacity is 0.
+    int new_cap = std::max(2 * s.cap, 1);
+    // reallocate basically creates a new contiguous block of memory
+    // with the new capacity and copies the data from the old block to
+    // the new block.
+    int *new_backing_array = (int *) realloc(s.data, new_cap * sizeof(int));
+    if (new_backing_array == nullptr) {
+      throw std::runtime_error("grow: out of memory");
+    }
+    // move the pointer to the new backing array.
+    s.data = new_backing_array;
+    // update the capacity.
+    s.cap = new_cap;
+  }
+  s.len++;
+  set_value(s, s.len - 1, v); // set the value at the end of the slice.
+  return s;
+}
+```
+
+Copying the data from the previous backing array to a new backing array when `s.len == s.cap` might seem like it has worse performance, but it actually takes constant time complexity, $O(1)$. I will explain the math later.
+
+### Demo
+
+To see how the slice works, let's run the code below:
+
+```cpp
+int main() {
+  Slice s = make(0, 1);
+  std::cout << "slice created: " << s << std::endl;
+  std::cout << "size of slice: " << sizeof(s) << std::endl;
+
+  int last_cap = s.cap;
+  for (int i = 0; i < 10; i++) {
+    std::cout << "append value: " << i << std::endl;
+    s = append(s, i);
+    if (s.cap != last_cap) {
+      std::cout << "slice capacity changed: " << s << std::endl;
+      last_cap = s.cap;
+    }
+  }
+
+  std::cout << "slice: " << s << std::endl;
+
+  std::cout << "updating slice[0] to 100" << std::endl;
+  set_value(s, 0, 100);
+
+  std::cout << "slice after update: " << s << std::endl;
+  std::cout << "size of slice: " << sizeof(s) << std::endl;
+  free_slice(s);
+  return 0;
+}
+```
+
+**Output:**
+
+```cpp
+slice created: Slice{ .len=0 .cap=1 .data=[] }
+size of slice: 16
+append value: 0
+append value: 1
+slice capacity changed: Slice{ .len=2 .cap=2 .data=[0, 1] }
+append value: 2
+slice capacity changed: Slice{ .len=3 .cap=4 .data=[0, 1, 2] }
+append value: 3
+append value: 4
+slice capacity changed: Slice{ .len=5 .cap=8 .data=[0, 1, 2, 3, 4] }
+append value: 5
+append value: 6
+append value: 7
+append value: 8
+slice capacity changed: Slice{ .len=9 .cap=16 .data=[0, 1, 2, 3, 4, 5, 6, 7, 8] }
+append value: 9
+slice: Slice{ .len=10 .cap=16 .data=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9] }
+updating slice[0] to 100
+slice after update: Slice{ .len=10 .cap=16 .data=[100, 1, 2, 3, 4, 5, 6, 7, 8, 9] }
+size of slice: 16
+```
+
+By tracing the output, we can observe a few things:
+
+1. The size of the slice, whether it is empty or contains values, is always 16 bytes long, which is the same as the size of the `Slice` struct or the `SliceHeader` in Go.
+2. The capacity will double in size based on the initial capacity, meaning that if we provide a larger capacity when creating the slice, we can reduce the frequency of the growing process.
+3. When passing a `Slice` as a value, it copies the `Slice`, but the `Data` pointer always points to the backing array. This is why even if we modify the copied `Slice`, the other copies of the `Slice` will have the same effect. This behavior is also observed in Go.
+
+
+## Analyzing Time Complexity for the Append Function
+
+As we've seen in the previous section, the slice does not frequently double its capacity. For instance, when we start with an initial capacity of $1$ and add $10$ items to the slice, the capacity is doubled only four times, at lengths of $1, 2, 4,$ and $8$. As we add more items, the frequency of capacity doubling decreases. This makes amortized analysis the best approach to understand complexity, as it considers the average workload distribution across iterations.
+
+To formalize this, let $L$ be the length of the `Slice`, and $C$ be its capacity. Let's assume that initially, $L=0$ and $C=1$. To add $N$ items, two cases can occur:
+1. First, if there is still room, adding a new item will take $O(1)$.
+2. Second, if there is no more room, the length is doubled, and the items are copied to the new backing array, taking $O(L)$ time for copying. In this case, the capacity of the new backing array will be $C=2L$.
+
+To calculate the total number of times the backing array is copied, we need to determine how many times it grows. Since it grows by a factor of 2 each time, there will be $K$ copies.
+
+Thus, the total number of copies is:
+
+$$
+    1 + 2 + 4 + \dots + 2^{K} = \sum_{i=0}^{K}{2^i}
+$$
+
+which can also be expressed as:
+
+$$
+    \sum_{i=0}^{K}{2^{K-i}} = 2^K + 2^{K-1} + \dots + 2^2 + 2^1 + 2^0
+$$
+
+As we can see, these are geometric sequences with a ratio $r < 1$. We can calculate $r$ as follows:
+
+$$
+\begin{aligned}
+    r &= \frac{2^{K-1}}{2^K} \\
+      &= \frac{1}{2} \left(\frac{2^K}{2^K}\right) \\
+      &= \frac{1}{2}
+\end{aligned}
+
+$$
+
+Since $r<1$, we can use the geometric partial sum formula to calculate the total number of copies:
+
+$$
+\begin{equation}
+\sum_{i=0}^{K}{2^{K-i}} = \frac{a}{1-r}
+\end{equation}
+$$
+
+where $a=2^K$. Thus:
+
+$$
+\begin{equation}
+\begin{split}
+\sum_{i=0}^{K}{2^{K-i}} &= \frac{2^K}{1-\frac{1}{2}} \\
+&= \frac{2^K}{\frac{1}{2}} \\
+&= 2^{K+1} \\
+&= 2(2^{K})
+\end{split}
+\end{equation}
+$$
+
+The total number of copies is $2(2^K)$. Since we know that $2^K \leq N$, we can conclude that:
+
+$$
+\begin{equation}
+\begin{split}
+2^K &\leq N \\
+\log_{2}{2^K} &\leq \log_{2}{N} \\
+K &\leq \log_{2}{N}
+\end{split}
+\end{equation}
+$$
+
+Therefore, the total number of copies is:
+
+$$
+    \begin{equation}
+    \begin{split}
+    total &= 2(2^{\log_{2}{N}}) \\
+    &= 2(N)
+    \end{split}
+    \end{equation}
+$$
+
+When there is no more room for new items, the total number of copies is equal to $2N$. Otherwise, adding $N$ items takes $O(1)$ for each item, resulting in a total runtime of $O(N)$. Therefore, the worst-case runtime is $O(2N) + O(N) = O(3N)$. Since we are working on amortized analysis, we need to calculate the average time complexity for adding $N$ items, which is equal to:
+
+$$
+\begin{equation}
+\begin{split}
+amortized &= O(\frac{2N+N}{N}) \\
+&= O(\frac{3N}{N}) \\
+&= O(3) \\
+&= O(1)
+\end{split}
+\end{equation}
+$$
+
+In conclusion, using the amortized analysis, we can prove that adding $N$ items into `Slice` is $O(1)$ or **Constant**.
+
+
+## Conclusion
+
+1. Passing a `Slice` by value in Go is cheap since it does not copy the data in the backing array. So passing `Slice` by reference in Go is not necessary
+2. The size of the `Slice` does not depend on how many items are stored in the slice; instead, it will always be equal to the size of the `SliceHeader`.
+3. Adding a new item to the slice takes $O(1)$.
+4. Even though adding a new item is $O(1)$, initializing a `Slice` with a larger capacity also reduces the frequency of growing, which, from a Go perspective, reduces memory allocation.
