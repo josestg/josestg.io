@@ -1,0 +1,150 @@
+---
+title: 'Practical Design Patterns in Go: Mastering the Adapter Pattern'
+date: '2023-10-23'
+tags: ['go', 'design-pattern']
+draft: false
+summary: Dive into the practical world of design patterns in Go with a special focus on the Adapter pattern, part of our "Practical Design Patterns in Go" blog series.
+images: []
+---
+
+# Adapter
+
+TODO...
+
+## Functional Adapter
+
+We can observe this pattern in the Go standard library `net/http`. But before diving into that, let's examine the code below to understand how this pattern works.
+
+```go
+// HealthHandler is a handler for health check.
+type HealthHandler struct {
+	log *slog.Logger
+}
+
+// NewHealthHandler creates a new health handler.
+func NewHealthHandler(log *slog.Logger) *HealthHandler {
+	return &HealthHandler{log: log}
+}
+
+// ServeHTTP implements http.Handler.
+func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	l := h.log.With("method", r.Method, "uri", r.RequestURI)
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := io.WriteString(w, "OK"); err != nil {
+		l.Error("could not write response", "error", err)
+	} else {
+		l.Info("health check success", "latency", time.Since(started))
+	}
+}
+
+// RegisterRoutes registers all routes to mux.
+func RegisterRoutes(mux *http.ServeMux) {
+	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	slog.SetDefault(log)
+
+	health := NewHealthHandler(log)
+	mux.Handle("/api/v1/health", health)
+}
+```
+
+The code above is straightforward. We have a simple health check handler registered at the path `/api/v1/health`, and for the sake of simplicity, we allow all methods. When a request is received by the handler, it logs request information and latency. As we can see, the handler is very simple, but we need to create a new type to satisfy the `http.Handler` interface. Fortunately, `http.ServeMux` also has a method that can accept a function instead of an `http.Handler` interface. After some refactoring, we have this:
+
+```go
+// HealthCheckHandler handles health check request.
+func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	l := slog.Default().With("method", r.Method, "uri", r.RequestURI)
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := io.WriteString(w, "OK"); err != nil {
+		l.Error("could not write response", "error", err)
+	} else {
+		l.Info("health check success", "latency", time.Since(started))
+	}
+}
+
+// RegisterRoutes registers all routes to mux.
+func RegisterRoutes(mux *http.ServeMux) {
+	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	slog.SetDefault(log)
+
+	mux.HandleFunc("/api/v1/health", HealthCheckHandler)
+}
+```
+
+The `mux.HandleFunc` takes an ordinary function with the required signature `func(http.ResponseWriter, *http.Request)` and internally implements the `http.Handler` interface. But how does it work?
+
+In Go, a function is a first-class citizen, meaning we can treat functions like any other value, including defining methods on function types. The concept of a functional adapter is an idea that allows an ordinary function to satisfy an interface without the need for an intermediate struct to wrap the function. Let's take a look at `http.HandlerFunc`, which is the functional adapter that converts an ordinary function with the signature `func(http.ResponseWriter, *http.Request)` into an `http.Handler`. To achieve this, the first step is to define a type with the same signature as the method to be implemented, which in our case is `http.Handler`.
+
+```
+type HandlerFunc func(http.ResponseWriter, *http.Request)
+```
+
+We can create a simple check to verify if the `HandlerFunc` signature matches that of `http.Handler.ServeHTTP` by using the following code:
+
+```go
+// quick check to verify if the HandlerFunc has the same signature as
+// http.Handler.ServeHTTP.
+var _ HandlerFunc = http.DefaultServeMux.ServeHTTP
+```
+
+The next step is to implement the `http.Handler` interface, which is our target interface.
+
+```go
+// ServeHTTP calls f(w, r).
+func (f HandlerFunc) ServeHTTP(w ResponseWriter, r *Request) {
+	f(w, r)
+}
+```
+
+The implementation is very straightforward; it simply forwards the call to the receiver, which is the actual function. Now, let's use `mux.Handle` as before, and it will work.
+
+```go
+
+// The HandlerFunc type is an adapter to allow the use of
+// ordinary functions as HTTP handlers. If f is a function
+// with the appropriate signature, HandlerFunc(f) is a
+// Handler that calls f.
+type HandlerFunc func(http.ResponseWriter, *http.Request)
+
+// quick check to verify if the HandlerFunc has the same signature as
+// http.Handler.ServeHTTP.
+var _ HandlerFunc = http.DefaultServeMux.ServeHTTP
+
+// quick check to verify if the HandlerFunc implements http.Handler.
+var _ http.Handler = HandlerFunc(nil)
+
+// ServeHTTP calls f(w, r).
+func (f HandlerFunc) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	f(w, r)
+}
+
+// HealthCheckHandler handles health check request.
+func HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	started := time.Now()
+	l := slog.Default().With("method", r.Method, "uri", r.RequestURI)
+
+	w.WriteHeader(http.StatusOK)
+	if _, err := io.WriteString(w, "OK"); err != nil {
+		l.Error("could not write response", "error", err)
+	} else {
+		l.Info("health check success", "latency", time.Since(started))
+	}
+}
+
+// RegisterRoutes registers all routes to mux.
+func RegisterRoutes(mux *http.ServeMux) {
+	log := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{}))
+	slog.SetDefault(log)
+
+	mux.Handle("/api/v1/health", HandlerFunc(HealthCheckHandler))
+}
+```
+
+The magic lies in `HandlerFunc(HealthCheckHandler)`. This code essentially converts the function into a custom type, `HandlerFunc`. Since `HandlerFunc` implements the `http.Handler` interface, it is accepted.
+
+Fortunately, we don't have to implement this ourselves. The `net/http` package already provides the `http.HandlerFunc` for us.
+
+This pattern is very useful, especially for testing, as I and the Go Core Teams have found. For example, we can create an adapter for [io.Closer](https://cs.opensource.google/go/go/+/master:src/net/http/transport_test.go;l=3578-3580;drc=6760f20ef58a8d99ffe898b51d938577ab19c900) to mock close behavior, or for [io.Reader](https://cs.opensource.google/go/go/+/master:src/io/multi_test.go;l=244-249;drc=7c47c9773cc3847f8851a04753f7f008b2add3b1), [io.Writer](https://cs.opensource.google/go/go/+/master:src/net/http/requestwrite_test.go;l=848-850;drc=403e5f1cb174185a763745276e12156e8d70ba6a), and so on.
