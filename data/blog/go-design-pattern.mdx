@@ -82,7 +82,7 @@ In Go, a function is a first-class citizen, meaning we can treat functions like 
 type HandlerFunc func(http.ResponseWriter, *http.Request)
 ```
 
-We can create a simple check to verify if the `HandlerFunc` signature matches that of `http.Handler.ServeHTTP` by using the following code:
+We can create a simple check to verify if the `HandlerFunc` signature matches the `http.Handler.ServeHTTP` by using the following code:
 
 ```go
 // quick check to verify if the HandlerFunc has the same signature as
